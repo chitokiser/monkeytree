@@ -1,59 +1,341 @@
+<!-- /index.html -->
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>USDT&HEX&현금 P2P거래소</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MonkeyTree - DAO</title>
 
-  <!-- 파비콘 -->
-  <link rel="icon" href="/assets/img/favicon.png" />
+  <link rel="stylesheet" href="assets/css/app.css" />
+  <link rel="stylesheet" href="assets/css/index.css" />
 
-  <!-- CSS (중복 로드 금지) -->
-  <link rel="stylesheet" href="/assets/css/reset.css" />
-  <link rel="stylesheet" href="/assets/css/theme.css" />
-  <link rel="stylesheet" href="/assets/css/app.css" />
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.14.0/dist/ethers.umd.min.js"></script>
+  <script src="assets/js/partials.js" defer></script>
 </head>
+
 <body>
   <div class="page">
     <div id="site-header"></div>
 
-    <main class="site-main">
-      <div class="main-wrap">
-        <section class="hero">
-          <div class="block-title">우리들의 P2P 토큰 거래소</div>
-          <div class="block-text" style="margin-top:8px;">
-            USDT 또는 HEX를 원하는 법정화폐를 받고 판매하세요.<br />
-            HEX를 매수하면 거래금액에 비례하여 VET을 보너스로 받습니다
+    <main class="main-wrap">
+      <section class="hero">
+        <div class="hero-top">
+          <div class="hero-left">
+            <h1 class="title">MonkeyTree Farm</h1>
+
+            <div class="sub">
+              HEX를 충전해 씨앗을 심고, 내부잔액의 10%를 하루 1회 출금합니다.
+              티켓은 지정 심기(choice)에 사용됩니다.
+              <span class="tip" data-tip="처음이면: 1) 지갑 연결  2) 승인(approve)  3) 충전  4) 씨앗 심기">?</span>
+            </div>
           </div>
-        </section>
 
-        <div class="hr"></div>
+          <div class="hero-right">
+            <span class="chip" id="netBadge">네트워크: opBNB</span>
+            <span class="chip mono" id="addrBadge">지갑: 미연결</span>
+            <button class="btnx" id="btnConnect">지갑 연결</button>
+            <button class="btnx secondary" id="btnRefresh">새로고침</button>
+          </div>
+        </div>
 
-        <section class="market">
-          <div class="block-title" style="font-size:20px;">매매 리스트</div>
-          <div id="tradeList" style="margin-top:10px;"></div>
-        </section>
-      </div>
+        <div class="grid">
+          <!-- 좌측: 상태/내정보 -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">
+                현재 상태
+                <span class="tip" data-tip="시스템의 핵심 수치(가격/포트 수/컨트랙트 잔고/일일 출금 한도)를 보여줍니다.">?</span>
+              </div>
+              <span class="chip" id="updatedAt">-</span>
+            </div>
+
+            <div class="metrics">
+              <div class="metric">
+                <div class="mk">
+                  씨앗 가격
+                  <span class="tip" data-tip="씨앗 1개를 심을 때 내부잔액에서 차감되는 HEX입니다.">?</span>
+                </div>
+                <div class="mv mono" id="mPrice">-</div>
+              </div>
+
+              <div class="metric">
+                <div class="mk">
+                  포트 개수
+                  <span class="tip" data-tip="포트 번호는 1~remain 입니다. 포트 카드를 클릭하면 조회칸에 자동 입력됩니다.">?</span>
+                </div>
+                <div class="mv mono" id="mRemain">-</div>
+              </div>
+
+              <div class="metric">
+                <div class="mk">
+                  기본 차감률
+                  <span class="tip" data-tip="게임 밸런스 파라미터입니다. 보너스 계산에 영향을 줍니다.">?</span>
+                </div>
+                <div class="mv mono" id="mRate">-</div>
+              </div>
+            </div>
+
+            <div class="sp"></div>
+
+            <div class="metrics">
+              <div class="metric">
+                <div class="mk">
+                  컨트랙트 HEX 잔고
+                  <span class="tip" data-tip="컨트랙트가 보유한 HEX입니다. 출금 가능 여부에 영향을 줍니다.">?</span>
+                </div>
+                <div class="mv mono" id="mCxHex">-</div>
+              </div>
+
+              <div class="metric">
+                <div class="mk">
+                  세금 누적
+                  <span class="tip" data-tip="세금이 기준 이상 누적되면 뱅크로 이동하고 기록됩니다.">?</span>
+                </div>
+                <div class="mv mono" id="mTax">-</div>
+              </div>
+
+              <div class="metric">
+                <div class="mk">
+                  턴(기록) 길이
+                  <span class="tip" data-tip="누군가 씨앗을 심을 때마다 1씩 증가합니다. 포트 가치 상승의 핵심 변수입니다.">?</span>
+                </div>
+                <div class="mv mono" id="mPlLen">-</div>
+              </div>
+            </div>
+
+            <div class="sp"></div>
+
+            <div class="metrics">
+              <div class="metric">
+                <div class="mk">
+                  오늘 출금 한도(전체)
+                  <span class="tip" data-tip="하루 시작 시점 스냅샷 잔고의 10%가 오늘 전체 출금 상한입니다.">?</span>
+                </div>
+                <div class="mv mono" id="mDailyCap">-</div>
+              </div>
+
+              <div class="metric">
+                <div class="mk">
+                  오늘 출금 누적(전체)
+                  <span class="tip" data-tip="오늘 이미 출금된 총액입니다. 한도에 도달하면 더 이상 출금이 안 됩니다.">?</span>
+                </div>
+                <div class="mv mono" id="mWithdrawnToday">-</div>
+              </div>
+
+              <div class="metric">
+                <div class="mk">
+                  하루 시작 잔고(스냅샷)
+                  <span class="tip" data-tip="하루 기준선을 계산하기 위한 값입니다.">?</span>
+                </div>
+                <div class="mv mono" id="mDayBalance">-</div>
+              </div>
+            </div>
+
+            <div class="sp"></div>
+
+            <div class="card-h">
+              <div class="card-t">
+                내 정보
+                <span class="tip" data-tip="내 지갑 HEX 잔고, 충전된 내부잔액, 티켓 수를 보여줍니다.">?</span>
+              </div>
+              <span class="chip">내 지갑 / 내부잔액 / 티켓</span>
+            </div>
+
+            <div class="metrics">
+              <div class="metric">
+                <div class="mk">
+                  내 HEX 보유량
+                  <span class="tip" data-tip="지갑에 있는 HEX 잔고입니다. 충전/티켓구매 시 사용됩니다.">?</span>
+                </div>
+                <div class="mv mono" id="mMyHex">-</div>
+              </div>
+
+              <div class="metric">
+                <div class="mk">
+                  내부잔액(충전금)
+                  <span class="tip" data-tip="충전한 HEX가 내부잔액으로 잡힙니다. 씨앗 심기와 출금(내부잔액의 10%)에 사용됩니다.">?</span>
+                </div>
+                <div class="mv mono" id="mMyPay">-</div>
+              </div>
+
+              <div class="metric">
+                <div class="mk">
+                  내 티켓
+                  <span class="tip" data-tip="지정 심기(choice)는 티켓 10장을 소모합니다. 티켓 구매도 승인→구매 순서입니다.">?</span>
+                </div>
+                <div class="mv mono" id="mMyTickets">-</div>
+              </div>
+            </div>
+
+            <div class="sp"></div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">
+                  내 쿨타임 기준시각
+                  <span class="tip" data-tip="charge 또는 withdraw를 하면 기준시각이 갱신됩니다. withdraw는 24시간에 1번 가능합니다.">?</span>
+                </div>
+                <div class="v mono" id="mAllowt">-</div>
+              </div>
+
+              <div class="row">
+                <div class="k">
+                  티켓 가격
+                  <span class="tip" data-tip="1장당 0.5 HEX입니다. (컨트랙트 상수)">?</span>
+                </div>
+                <div class="v mono" id="mTicketPrice">0.5 HEX</div>
+              </div>
+            </div>
+
+            <div class="note" id="noteBox"></div>
+          </div>
+
+          <!-- 우측: 실행 -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">
+                실행 패널
+                <span class="tip" data-tip="중요: 충전/티켓구매는 승인(approve) 후 실행해야 합니다. 승인 = 컨트랙트가 내 HEX를 가져갈 수 있게 허용하는 1회 절차입니다.">?</span>
+              </div>
+              <span class="chip">approve → 실행</span>
+            </div>
+
+            <div class="form">
+              <div class="field">
+                <div class="label">
+                  충전할 HEX
+                  <span class="tip" data-tip="순서: (1) 충전 금액 승인(1회) → (2) 충전하기. 내부잔액으로 적립됩니다.">?</span>
+                </div>
+                <input class="input mono" id="inCharge" placeholder="예: 10" inputmode="decimal" />
+              </div>
+
+              <div class="field">
+                <div class="label">
+                  티켓 구매 수량
+                  <span class="tip" data-tip="순서: (1) 티켓 금액 승인(1회) → (2) 티켓 구매하기. 1장=0.5 HEX">?</span>
+                </div>
+                <input class="input mono" id="inTicketQty" placeholder="예: 1" inputmode="numeric" />
+              </div>
+
+              <div class="field">
+                <div class="label">
+                  지정 심기 번호(포트)
+                  <span class="tip" data-tip="choice는 티켓 10장을 소모하고 지정한 포트에 심습니다.">?</span>
+                </div>
+                <input class="input mono" id="inChoiceNum" placeholder="예: 7" inputmode="numeric" />
+              </div>
+
+              <div class="field">
+                <div class="label">
+                  포트 조회 번호
+                  <span class="tip" data-tip="포트 카드를 클릭하면 자동 입력됩니다. 또는 번호를 직접 입력해 조회하세요.">?</span>
+                </div>
+                <input class="input mono" id="inPortNum" placeholder="예: 7" inputmode="numeric" />
+              </div>
+            </div>
+
+            <div class="btns">
+              <button class="btnx" id="btnApproveCharge">
+                충전 금액 승인
+                <span class="tip" data-tip="충전할 만큼만 승인하세요. 승인이 끝나면 ‘충전하기’를 누르면 됩니다.">?</span>
+              </button>
+
+              <button class="btnx" id="btnCharge">
+                충전하기
+                <span class="tip" data-tip="지갑 HEX를 컨트랙트로 보내고, 내부잔액(mypay)에 적립됩니다.">?</span>
+              </button>
+
+              <button class="btnx" id="btnApproveTicket">
+                티켓 금액 승인
+                <span class="tip" data-tip="티켓 수량×0.5 HEX 만큼 승인합니다. 승인이 끝나면 ‘티켓 구매하기’를 누르세요.">?</span>
+              </button>
+
+              <button class="btnx" id="btnBuyTicket">
+                티켓 구매하기
+                <span class="tip" data-tip="티켓이 증가합니다. 지정 심기(choice)에 사용됩니다.">?</span>
+              </button>
+
+              <button class="btnx" id="btnSeeding">
+                씨앗 심기(랜덤)
+                <span class="tip" data-tip="랜덤 포트가 선택됩니다. 성공하면 tx 결과로 ‘몇 번 포트에 심었는지’ 안내합니다.">?</span>
+              </button>
+
+              <button class="btnx" id="btnChoice">
+                씨앗 심기(지정)
+                <span class="tip" data-tip="포트 번호를 직접 지정합니다. 티켓 10장이 필요합니다.">?</span>
+              </button>
+
+              <button class="btnx secondary" id="btnMyPorts">
+                내 포트 찾기
+                <span class="tip" data-tip="전체 포트를 훑어서 owner가 내 주소인 포트만 모아 보여줍니다. 카드도 하이라이트됩니다.">?</span>
+              </button>
+
+              <button class="btnx danger" id="btnWithdraw">
+                하루 출금(10%)
+                <span class="tip" data-tip="내부잔액의 10%를 하루 1회 출금합니다. 전역 한도/쿨타임 조건이 있습니다.">?</span>
+              </button>
+
+              <button class="btnx secondary" id="btnReadPort">
+                포트 조회
+                <span class="tip" data-tip="입력한 포트 번호의 owner/depo/depon/getvalue를 조회합니다.">?</span>
+              </button>
+            </div>
+
+            <div class="sp"></div>
+
+            <div class="card-h">
+              <div class="card-t">
+                선택한 포트 정보
+                <span class="tip" data-tip="getvalue는 ‘내가 심은 시점(depon) 이후, 전체 턴(pllength)이 얼마나 늘었는지’로 계산됩니다. 턴이 늘수록 값이 커져 성장 이미지가 바뀝니다.">?</span>
+              </div>
+              <span class="chip" id="portChip">port: -</span>
+            </div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">주인(owner)</div>
+                <div class="v mono" id="pOwner">-</div>
+              </div>
+              <div class="row">
+                <div class="k">심은 금액(depo)</div>
+                <div class="v mono" id="pDepo">-</div>
+              </div>
+              <div class="row">
+                <div class="k">심은 시점(depon)</div>
+                <div class="v mono" id="pDepon">-</div>
+              </div>
+              <div class="row">
+                <div class="k">현재 가치(getvalue)</div>
+                <div class="v mono" id="pValue">-</div>
+              </div>
+            </div>
+
+            <div class="note" id="txBox"></div>
+          </div>
+        </div>
+
+        <div class="sp"></div>
+
+        <div class="card">
+          <div class="card-h">
+            <div class="card-t">
+              포트 전체 보기
+              <span class="tip" data-tip="화분 이미지는 상태에 따라 자동 변경됩니다. 빈포트=seed1, 새로 심은 직후=seed1(기본), 성장=seed2/seed3, 열매는 hex.png가 1~N개로 표시됩니다.">?</span>
+            </div>
+            <span class="chip" id="portsMeta">remain: -</span>
+          </div>
+
+          <div class="ports-grid" id="portsGrid"></div>
+
+          <div class="note" id="myPortsBox">내 포트: -</div>
+        </div>
+
+      </section>
     </main>
 
     <div id="site-footer"></div>
   </div>
 
-  <!-- 전역 설정/컨트랙트/파이어베이스/partials -->
- <script src="https://cdn.jsdelivr.net/npm/ethers@6.14.0/dist/ethers.umd.min.js"></script>
-<script src="/assets/js/config.js"></script>
-<script src="/assets/js/contract.js"></script>
-<script type="module" src="/assets/js/firebase.js"></script>
-<script src="/assets/js/partials.js"></script>
-
-<script type="module">
-  // header/footer 주입 완료까지 보장
-  await window.loadPartials();
-  // 그 다음에 지갑 기능 로드
-  await import("/assets/js/header-wallet.js");
-</script>
-
-<script type="module" src="/assets/js/pages/index.js"></script>
-
+  <script src="assets/js/index.js"></script>
 </body>
 </html>

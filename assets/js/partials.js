@@ -1,18 +1,19 @@
 // /assets/js/partials.js
-window.loadPartials = async function loadPartials() {
-  const mountHeader = document.getElementById("site-header");
-  const mountFooter = document.getElementById("site-footer");
+(() => {
+  const loadInto = async (selector, url) => {
+    const el = document.querySelector(selector);
+    if (!el) return;
 
-  async function inject(url, mount) {
-    if (!mount) return;
-    const res = await fetch(url);
-    const html = await res.text();
-    mount.innerHTML = html;
-  }
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Failed to load ${url} (${res.status})`);
 
-  try { await inject("/partials/header.html", mountHeader); } catch (e) { console.warn(e); }
-  try { await inject("/partials/footer.html", mountFooter); } catch (e) { console.warn(e); }
+    el.innerHTML = await res.text();
+  };
 
-  // 주입 완료 이벤트 (header-wallet이 이걸 듣고 바인딩)
-  window.dispatchEvent(new Event("partials:loaded"));
-};
+  const boot = async () => {
+    await loadInto("#site-header", "partials/header.html");
+    await loadInto("#site-footer", "partials/footer.html");
+  };
+
+  boot().catch((e) => console.error("[partials]", e));
+})();

@@ -1,8 +1,14 @@
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!-- /partials/head.html -->
+<!-- head.html은 "head 내부에 들어갈 조각"만 둡니다 (html/head/body 태그 금지) -->
 
-<link rel="stylesheet" href="/assets/css/reset.css" />
-<link rel="stylesheet" href="/assets/css/theme.css" />
-<link rel="stylesheet" href="/assets/css/app.css" />
+<link rel="icon" href="assets/img/favicon.png" />
+<link rel="shortcut icon" href="assets/img/favicon.png" />
 
-<link rel="icon" href="data:," />
+<!-- 공통 CSS -->
+<link rel="stylesheet" href="assets/css/index.css" />
+
+<!-- ethers v6 (UMD) -->
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.14.0/dist/ethers.umd.min.js"></script>
+
+<!-- partials loader (head/body 어디서든 동작 가능하지만, 보통 head에서 먼저 로드) -->
+<script src="assets/js/partials.js"></script>

@@ -1,0 +1,577 @@
+/* /assets/css/index.css */
+.hero{ padding-top: 6px; }
+
+.hero-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+  margin: 10px 0 16px;
+}
+.hero-left{ min-width: 260px; flex:1; }
+.title{
+  margin: 8px 0 6px;
+  font-size: 34px;
+  letter-spacing: .2px;
+}
+.sub{
+  color: var(--muted);
+  line-height: 1.55;
+  font-size: 14px;
+}
+.hero-right{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns: 1.05fr .95fr;
+  gap: 14px;
+}
+@media (max-width: 980px){
+  .grid{ grid-template-columns: 1fr; }
+}
+
+.card{
+  border:1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+  border-radius: var(--r);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+.card-h{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom: 10px;
+}
+.card-t{ font-weight:900; }
+
+.metrics{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+@media (max-width: 620px){
+  .metrics{ grid-template-columns: 1fr; }
+}
+.metric{
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+  border-radius: 14px;
+  padding: 10px;
+}
+.mk{ font-size:12px; color: var(--muted); }
+.mv{ font-size:16px; margin-top:6px; }
+
+.rows{ display:flex; flex-direction:column; gap:8px; }
+.row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding: 10px 12px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+  border-radius: 14px;
+}
+.k{ color: var(--muted); font-size:13px; }
+.v{ text-align:right; max-width: 68%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.form{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 620px){
+  .form{ grid-template-columns: 1fr; }
+}
+.field .label{ font-size:12px; color: var(--muted); margin: 2px 0 6px; }
+.input{
+  width:100%;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.25);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 12px 12px;
+  outline:none;
+}
+.input:focus{
+  border-color: rgba(124,255,209,.55);
+  box-shadow: 0 0 0 3px rgba(124,255,209,.12);
+}
+
+.btns{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top: 12px;
+}
+
+.note{
+  margin-top: 12px;
+  border:1px dashed rgba(255,255,255,.18);
+  background: rgba(0,0,0,.14);
+  border-radius: 14px;
+  padding: 10px 12px;
+  color: var(--muted);
+  min-height: 42px;
+}
+
+/* ====== 포트 카드 그리드 (이미지 방식) ====== */
+.ports-grid{
+  display:grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+@media (max-width: 1200px){
+  .ports-grid{ grid-template-columns: repeat(5, 1fr); }
+}
+@media (max-width: 980px){
+  .ports-grid{ grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 680px){
+  .ports-grid{ grid-template-columns: repeat(2, 1fr); }
+}
+
+.port-card{
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+  border-radius: 16px;
+  padding: 10px;
+  cursor:pointer;
+  transition: transform .12s ease;
+  text-align:center;
+}
+.port-card:hover{ transform: translateY(-2px); }
+
+.port-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom: 8px;
+}
+.port-no{
+  font-weight:900;
+  letter-spacing:.3px;
+}
+.port-owner{
+  font-size:12px;
+  color: var(--muted);
+  max-width: 60%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.port-viz{
+  position: relative;
+  height: 120px;
+  border-radius: 14px;
+  border:1px solid rgba(255,255,255,.10);
+  background: radial-gradient(120px 70px at 40% 30%, rgba(124,255,209,.10), rgba(0,0,0,.10));
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.port-viz .tree-base{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select:none;
+  pointer-events:none;
+}
+
+.port-viz .fruits{
+  position:absolute;
+  top:10px;
+  left:50%;
+  transform: translateX(-50%);
+  display:flex;
+  gap:4px;
+  flex-wrap:wrap;
+  justify-content:center;
+  width: 84px;
+  pointer-events:none;
+}
+.port-viz .fruits img{
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.55));
+}
+
+.port-mini{
+  margin-top: 8px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.mini-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  font-size:12px;
+  color: var(--muted);
+}
+.mini-row .val{
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  max-width: 68%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.port-card.flash{
+  outline: 2px solid rgba(124,255,209,.75);
+  box-shadow: 0 0 0 6px rgba(124,255,209,.12);
+}.port-card.mine{
+  outline: 2px solid rgba(255, 210, 60, .55);
+  box-shadow: 0 0 0 6px rgba(255, 210, 60, .12);
+}
+/* /assets/css/index.css */
+.hero{ padding-top: 6px; }
+
+.hero-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+  margin: 10px 0 16px;
+}
+.hero-left{ min-width: 260px; flex:1; }
+.title{
+  margin: 8px 0 6px;
+  font-size: 34px;
+  letter-spacing: .2px;
+}
+.sub{
+  color: var(--muted);
+  line-height: 1.55;
+  font-size: 14px;
+}
+.hero-right{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns: 1.05fr .95fr;
+  gap: 14px;
+}
+@media (max-width: 980px){
+  .grid{ grid-template-columns: 1fr; }
+}
+
+.card{
+  border:1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+  border-radius: var(--r);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+.card-h{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom: 10px;
+}
+.card-t{ font-weight:900; }
+
+.metrics{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+@media (max-width: 620px){
+  .metrics{ grid-template-columns: 1fr; }
+}
+.metric{
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+  border-radius: 14px;
+  padding: 10px;
+}
+.mk{
+  font-size:12px;
+  color: var(--muted);
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.mv{ font-size:16px; margin-top:6px; }
+
+.rows{ display:flex; flex-direction:column; gap:8px; }
+.row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding: 10px 12px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+  border-radius: 14px;
+}
+.k{
+  color: var(--muted);
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.v{ text-align:right; max-width: 68%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.form{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 620px){
+  .form{ grid-template-columns: 1fr; }
+}
+.field .label{
+  font-size:12px;
+  color: var(--muted);
+  margin: 2px 0 6px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.input{
+  width:100%;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.25);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 12px 12px;
+  outline:none;
+}
+.input:focus{
+  border-color: rgba(124,255,209,.55);
+  box-shadow: 0 0 0 3px rgba(124,255,209,.12);
+}
+
+.btns{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top: 12px;
+}
+.btns .btnx{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+
+.note{
+  margin-top: 12px;
+  border:1px dashed rgba(255,255,255,.18);
+  background: rgba(0,0,0,.14);
+  border-radius: 14px;
+  padding: 10px 12px;
+  color: var(--muted);
+  min-height: 42px;
+}
+
+/* ===== 툴팁(?) ===== */
+.tip{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:18px;
+  height:18px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.22);
+  color: rgba(233,245,239,.85);
+  font-size:12px;
+  line-height:1;
+  cursor: help;
+  user-select:none;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.tip::after{
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  min-width: 220px;
+  max-width: 360px;
+  white-space: normal;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(10,14,14,.92);
+  color: rgba(233,245,239,.92);
+  font-size: 12px;
+  line-height: 1.5;
+  box-shadow: 0 16px 50px rgba(0,0,0,.55);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .12s ease, transform .12s ease;
+  z-index: 30;
+}
+
+.tip::before{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom: calc(100% + 4px);
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  background: rgba(10,14,14,.92);
+  border-left: 1px solid rgba(255,255,255,.14);
+  border-top: 1px solid rgba(255,255,255,.14);
+  transform: translateX(-50%) rotate(45deg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .12s ease;
+  z-index: 31;
+}
+
+.tip:hover::after,
+.tip:hover::before{
+  opacity: 1;
+}
+
+@media (max-width: 680px){
+  .tip::after{
+    min-width: 200px;
+    max-width: 300px;
+  }
+}
+
+/* ====== 포트 카드 그리드 ====== */
+.ports-grid{
+  display:grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+@media (max-width: 1200px){
+  .ports-grid{ grid-template-columns: repeat(5, 1fr); }
+}
+@media (max-width: 980px){
+  .ports-grid{ grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 680px){
+  .ports-grid{ grid-template-columns: repeat(2, 1fr); }
+}
+
+.port-card{
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+  border-radius: 16px;
+  padding: 10px;
+  cursor:pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.port-card:hover{ transform: translateY(-2px); }
+
+.port-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom: 8px;
+}
+.port-no{
+  font-weight:900;
+  letter-spacing:.3px;
+}
+.port-owner{
+  font-size:12px;
+  color: var(--muted);
+  max-width: 60%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.port-viz{
+  position: relative;
+  height: 100px;
+  border-radius: 14px;
+  border:1px solid rgba(255,255,255,.10);
+  background: radial-gradient(120px 70px at 40% 30%, rgba(124,255,209,.10), rgba(0,0,0,.10));
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.port-viz img.tree-base{
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+.fruits{
+  position:absolute;
+  top:10px;
+  left:50%;
+  transform: translateX(-50%);
+  display:flex;
+  gap:4px;
+  flex-wrap:wrap;
+  justify-content:center;
+  pointer-events:none;
+}
+.fruits img{
+  width:18px;
+  height:18px;
+  object-fit: contain;
+}
+
+.port-mini{
+  margin-top: 8px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.mini-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  font-size:12px;
+  color: var(--muted);
+}
+.mini-row .val{
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  max-width: 68%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* 선택/내 포트 강조(이미 JS에서 class를 붙이는 경우) */
+.port-card.flash{
+  box-shadow: 0 0 0 2px rgba(255,210,120,.55), 0 18px 60px rgba(0,0,0,.55);
+}
+.port-card.mine{
+  box-shadow: 0 0 0 2px rgba(124,255,209,.45), 0 18px 60px rgba(0,0,0,.55);
+}
+/* ===== 온체인 값(녹색 네온) ===== */
+.onchain{
+  color: rgba(124,255,209,0.98);
+  text-shadow:
+    0 0 10px rgba(124,255,209,0.55),
+    0 0 18px rgba(124,255,209,0.25);
+}
+.onchain-soft{
+  color: rgba(124,255,209,0.92);
+  text-shadow:
+    0 0 8px rgba(124,255,209,0.45);
+}
