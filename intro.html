@@ -1,0 +1,464 @@
+<!-- /intro.html -->
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MonkeyTree DAO - Whitepaper</title>
+
+  <!-- favicon -->
+  <link rel="icon" href="assets/img/favicon.png" />
+  <link rel="shortcut icon" href="assets/img/favicon.png" />
+
+  <link rel="stylesheet" href="assets/css/app.css" />
+  <link rel="stylesheet" href="assets/css/index.css" />
+
+  <!-- partials loader -->
+  <script src="assets/js/partials.js" defer></script>
+</head>
+
+<body>
+  <div class="page">
+    <div id="site-header"></div>
+
+    <main class="main-wrap">
+      <section class="hero">
+        <div class="hero-top">
+          <div class="hero-left">
+            <h1 class="title">MonkeyTree DAO &amp; MKT Bank Whitepaper</h1>
+            <div class="sub">
+              opBNB 네트워크에서 동작하는 게임형 낙찰계 구조와 연금 알고리즘을 결합한 탈중앙 금융 dApp.
+              <br />
+              이 문서는 시스템의 구조, 흐름, 안전장치, 리스크를 정리한 백서(v1.0 Draft)입니다.
+            </div>
+          </div>
+
+          <div class="hero-right">
+            <a class="btnx secondary" href="index.html">Farm 바로가기</a>
+            <a class="btnx" href="https://hexdao.netlify.app/" target="_blank" rel="noreferrer">HEX DAO 방문</a>
+          </div>
+        </div>
+
+        <div class="grid" style="grid-template-columns: 1fr;">
+          <!-- Quick Summary -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">0. 요약 (Abstract)</div>
+              <span class="chip">v1.0 Draft</span>
+            </div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">한 줄 설명</div>
+                <div class="v">
+                  HEX를 충전해 씨앗을 심고, 포트 가치 상승과 점유 교체 보너스로 내부 잔액을 축적한 뒤
+                  하루 1회 1/10씩 연금처럼 인출하는 순환형 dApp
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="k">핵심 질문</div>
+                <div class="v">
+                  기다림에 보상이 생길 수 있는가 / 참여자 간 가치 이전을 자동화할 수 있는가 /
+                  폰지가 아닌 순환형 구조는 어떻게 설계되는가
+                </div>
+              </div>
+            </div>
+
+            <div class="note">
+              이 문서는 구조를 이해하기 위한 설명서이며, 예금·보험·연금·투자상품이 아닙니다.
+            </div>
+          </div>
+
+          <!-- System Overview -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">1. 시스템 구성 개요</div>
+              <span class="chip">2 Contracts</span>
+            </div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">구성</div>
+                <div class="v">
+                  MonkeyTree Farm(게임·포트·연금) + MKT Bank(가격·스테이킹·배당)
+                </div>
+              </div>
+            </div>
+
+            <pre class="note" style="white-space:pre-wrap; line-height:1.6;">
+[ 사용자 ]
+    ↓
+MonkeyTree Farm (게임 · 포트 · 연금)
+    ↓ (세금 / 수익)
+MKT Bank (가격 · 스테이킹 · 배당)
+            </pre>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">Farm 역할</div>
+                <div class="v">씨앗 심기 / 포트 점유 / 내부 잔액(mypay) 관리 / 연금형 인출</div>
+              </div>
+              <div class="row">
+                <div class="k">Bank 역할</div>
+                <div class="v">MKT 가격 산정 / 자동 스테이킹 / 배당 / 수수료(HEX) 누적 및 연결</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Definitions -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">2. 핵심 개념 정의</div>
+              <span class="chip">Definitions</span>
+            </div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">내부 잔액 (mypay)</div>
+                <div class="v">
+                  HEX를 charge 하면 생기는 내부 회계 잔액. 포트 점유/보너스/인출의 기준이 되며,
+                  컨트랙트 내부에서만 순환(외부 전송 불가).
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="k">포트 (Port / Pot)</div>
+                <div class="v">
+                  총 N개(기본 100, DAO 변경 가능). 각 포트는 depo(씨앗가격), depon(턴 스냅샷), owner(점유자)를 가진다.
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="k">턴 (Turn / pllength)</div>
+                <div class="v">
+                  씨앗이 심길 때마다 1씩 증가하는 전역 카운터. 포트 가치는 턴 누적에 따라 자동 증가.
+                </div>
+              </div>
+            </div>
+
+            <pre class="note" style="white-space:pre-wrap; line-height:1.6;">
+포트 번호
+ ├─ depo   : 심어진 씨앗 가격
+ ├─ depon  : 심어진 시점의 턴 스냅샷
+ └─ owner  : 현재 점유자
+            </pre>
+          </div>
+
+          <!-- Seeding -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">3. 씨앗 심기 메커니즘</div>
+              <span class="chip">Seeding</span>
+            </div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">랜덤 시딩 (seeding)</div>
+                <div class="v">
+                  mypay로 씨앗 비용을 지불하면 1~remain 중 랜덤 포트를 점유.
+                  기존 점유자가 있다면 보너스가 지급되고, 점유권이 갱신된다.
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="k">선택 시딩 (choice)</div>
+                <div class="v">
+                  티켓 10장을 소모해 포트를 직접 선택.
+                  오래된 포트(가치가 성장한 포트)를 지정해 수확하는 전략이 가능하다.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Value Growth -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">4. 포트 가치 상승 구조</div>
+              <span class="chip">Formula</span>
+            </div>
+
+            <pre class="note" style="white-space:pre-wrap; line-height:1.7; font-size:13px;">
+포트 가치 = 씨앗 가격 × (경과 턴 + 100) / 100
+            </pre>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">핵심 의미</div>
+                <div class="v">
+                  오래될수록 가치가 커진다. 기다린 시간 자체가 이자 역할을 하며,
+                  외부 시세 변동과 무관하게 컨트랙트 규칙으로 계산된다.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bonus -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">5. 보너스(이자) 지급 구조</div>
+              <span class="chip">Bonus</span>
+            </div>
+
+            <pre class="note" style="white-space:pre-wrap; line-height:1.7;">
+[ 신규 점유자 ]
+  └─ 씨앗 심기
+        ↓
+[ 이전 점유자 ]
+  └─ 보너스 수령 (내부 잔액 증가)
+            </pre>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">특징</div>
+                <div class="v">
+                  보너스는 신규 참여자의 씨앗 비용에서 발생하며,
+                  운영자 개입 없이 스마트컨트랙트로 자동 실행된다.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pension Withdraw -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">6. 연금 인출 시스템</div>
+              <span class="chip">1/day</span>
+            </div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">인출 규칙</div>
+                <div class="v">
+                  하루 1회, mypay의 1/10씩 인출. 개인 쿨다운 + 전역 일일 한도 적용.
+                </div>
+              </div>
+              <div class="row">
+                <div class="k">효과</div>
+                <div class="v">
+                  전액 인출 구조가 없고, 단기 고갈을 억제하며, 유동성을 시간 축으로 분산시킨다.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Why Pension Works -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">7. 연금이 가능한 이유 (재원 순환)</div>
+              <span class="chip">Flow</span>
+            </div>
+
+            <pre class="note" style="white-space:pre-wrap; line-height:1.7;">
+씨앗 비용
+ → 이전 점유자 보너스
+ → 내부 잔액 축적
+ → 연금식 인출(1/10)
+ → 재참여(씨앗 심기)
+            </pre>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">핵심</div>
+                <div class="v">
+                  자금은 “사라지기”보다 “이동”에 가깝고,
+                  이동 속도는 규칙(쿨다운/캡/분할 인출)로 제한된다.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ticket -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">8. 티켓 시스템</div>
+              <span class="chip">Ticket</span>
+            </div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">획득</div>
+                <div class="v">
+                  씨앗 1회 심을 때마다 티켓 1장 자동 증가. 또는 HEX로 구매(1장=0.5 HEX).
+                </div>
+              </div>
+              <div class="row">
+                <div class="k">역할</div>
+                <div class="v">
+                  티켓 10장으로 포트를 직접 선택(choice)해,
+                  오래된 포트를 수확하는 전략을 가능하게 한다.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Not a game -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">9. 게임이 아닌 이유, 금융인 이유</div>
+              <span class="chip">Transparency</span>
+            </div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">특성</div>
+                <div class="v">
+                  확률형 보상이 아니라 시간과 참여가 결과를 만들며,
+                  계산식이 공개되고 운영자가 결과를 바꿀 수 없다.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ponzi -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">10. 왜 폰지와 다른가</div>
+              <span class="chip">Comparison</span>
+            </div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">폰지의 전형</div>
+                <div class="v">
+                  고정 수익 약속 / 신규 자금 의존 / 출금 제한 없음 / 운영자 개입 필수
+                </div>
+              </div>
+              <div class="row">
+                <div class="k">MonkeyTree DAO</div>
+                <div class="v">
+                  고정 수익 없음 / 참여자 간 가치 이동 / 분할 인출·쿨다운·전역 캡 /
+                  스마트컨트랙트 자동 실행
+                </div>
+              </div>
+            </div>
+
+            <pre class="note" style="white-space:pre-wrap; line-height:1.7;">
+[ 참여자 A ]
+  └─ 씨앗 심기
+        ↓
+[ 참여자 B ]
+  └─ 보너스 수령
+        ↓
+[ 내부 잔액 축적 ]
+        ↓
+ ├─ 연금 인출 (1/10)
+ └─ 재참여
+            </pre>
+          </div>
+
+          <!-- Bank -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">11. MKT Bank와의 연결</div>
+              <span class="chip">Ecosystem</span>
+            </div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">연결</div>
+                <div class="v">
+                  Farm에서 축적된 세금(HEX)은 Bank로 이동하여 가격 안정화·스테이킹 배당·장기 유지에 기여한다.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Safety -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">12. 이론적 안전장치</div>
+              <span class="chip">Guards</span>
+            </div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">전역 일일 출금 한도</div>
+                <div class="v">
+                  하루 시작 HEX 잔고를 스냅샷(dayBalance)으로 기록하고, 하루 출금 총합이 그 10%를 넘지 못한다.
+                </div>
+              </div>
+              <div class="row">
+                <div class="k">개인 쿨다운</div>
+                <div class="v">사용자당 하루 1회 출금으로 시간 분산 효과를 만든다.</div>
+              </div>
+              <div class="row">
+                <div class="k">분할 인출</div>
+                <div class="v">mypay의 1/10만 인출 가능하여 전액 회수 압력을 낮춘다.</div>
+              </div>
+              <div class="row">
+                <div class="k">유입 경로</div>
+                <div class="v">충전(charge) + 티켓 구매(buyTicket) + 지속적 참여에 의해 HEX가 유입된다.</div>
+              </div>
+              <div class="row">
+                <div class="k">remain(포트 수)</div>
+                <div class="v">포트 수는 점유 경쟁의 장기화를 유도해 참여 인센티브를 유지한다.</div>
+              </div>
+            </div>
+
+            <div class="note">
+              본 섹션은 “절대 고갈되지 않는다”를 주장하는 것이 아니라,
+              급격한 고갈을 억제하도록 설계된 장치를 설명한다.
+            </div>
+          </div>
+
+          <!-- Risks -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">13. 리스크 및 한계 고지</div>
+              <span class="chip">Disclosure</span>
+            </div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">유입 감소</div>
+                <div class="v">충전·티켓 구매 등 유입이 장기간 약화되면 출금 규모가 감소/정체될 수 있다.</div>
+              </div>
+              <div class="row">
+                <div class="k">참여 심리</div>
+                <div class="v">참여자 수와 활동성은 외부 환경과 심리에 영향을 받는다.</div>
+              </div>
+              <div class="row">
+                <div class="k">스마트컨트랙트 리스크</div>
+                <div class="v">코드 결함, 네트워크 이슈, 공격 가능성을 완전히 배제할 수 없다.</div>
+              </div>
+              <div class="row">
+                <div class="k">투자상품 아님</div>
+                <div class="v">예금·채권·보험·연금상품이 아니라 게임형 경제 실험이다.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conclusion -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">14. 결론</div>
+              <span class="chip">Conclusion</span>
+            </div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="k">정리</div>
+                <div class="v">
+                  MonkeyTree DAO는 단기 붕괴를 억제하는 안전장치와
+                  유입이 있을 때 안정화되는 순환 메커니즘을 갖춘
+                  게임 기반 연금형 경제 실험 모델이다.
+                </div>
+              </div>
+              <div class="row">
+                <div class="k">명확한 한 문장</div>
+                <div class="v">
+                  “절대 고갈되지 않는다”가 아니라, “무질서한 붕괴가 일어나기 어렵도록 설계된 구조”를 목표로 한다.
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </main>
+
+    <div id="site-footer"></div>
+  </div>
+</body>
+</html>

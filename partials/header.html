@@ -1,30 +1,51 @@
 <!-- /partials/header.html -->
 <header class="top-header">
   <div class="hdr-inner">
+    <!-- 브랜드 -->
     <a class="brand" href="index.html">
       <img class="brand-logo" src="assets/img/mkt.png" alt="MonkeyTree" />
       <span class="brand-name">MonkeyTree</span>
     </a>
 
-    <nav class="hdr-nav">
-      <a href="index.html">Farm</a>
-      <a href="tokendetail.html?token=MKT">Token</a>
-      <a href="treasury.html">Treasury</a>
+    <!-- 네비게이션 -->
+    <nav class="hdr-nav" id="hdrNav">
+      <a href="index.html">Home</a>
+      <a href="https://hexdao.netlify.app/tokendetail.html?token=MKT">MKT 토큰거래소</a>
+      <a href="intro.html">소개</a>
+      <a href="https://www.facebook.com/groups/1453946632758823">공식 커뮤니티</a>
+      <a href="/assets/docs/MonkeyTreeDAO.pdf">백서</a>
     </nav>
 
+    <!-- 우측 -->
     <div class="hdr-right">
       <span class="net-badge" id="hdrNet">opBNB</span>
-      <button class="btnx small" id="hdrConnect">Connect</button>
+      <button class="btnx small" id="hdrConnect">지갑 연결</button>
+
+      <!-- 햄버거 버튼 -->
+      <button class="burger" id="btnBurger" aria-label="menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
     </div>
   </div>
 </header>
 
 <script>
-  // index.html의 버튼과 동기화 (선택)
-  (function(){
+  (function () {
+    const burger = document.getElementById("btnBurger");
+    const nav = document.getElementById("hdrNav");
+
+    if (burger && nav) {
+      burger.addEventListener("click", () => {
+        nav.classList.toggle("open");
+        burger.classList.toggle("open");
+      });
+    }
+
+    // 기존 connect 버튼 연동
     const a = document.getElementById("btnConnect");
     const b = document.getElementById("hdrConnect");
-    if (!b) return;
-    b.addEventListener("click", () => a && a.click());
+    if (b && a) b.addEventListener("click", () => a.click());
   })();
 </script>

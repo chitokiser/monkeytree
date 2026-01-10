@@ -55,6 +55,39 @@
     fruit: "assets/img/tree/hex.png",    // 열매(HEX)
   };
 
+  const OPBNB = {
+  chainId: "0xCC", // 204
+  chainName: "opBNB Mainnet",
+  nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
+  rpcUrls: ["https://opbnb-mainnet-rpc.bnbchain.org"],
+  blockExplorerUrls: ["https://opbnbscan.com"],
+};
+
+async function ensureOpBNB() {
+  if (!window.ethereum) throw new Error("지갑(메타마스크) 없음");
+
+  const cur = await window.ethereum.request({ method: "eth_chainId" });
+  if (cur && cur.toLowerCase() === OPBNB.chainId.toLowerCase()) return;
+
+  // 1) 우선 체인 전환 시도
+  try {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: OPBNB.chainId }],
+    });
+    return;
+  } catch (e) {
+    // 2) 체인이 없으면 추가 후 전환
+    // Metamask: 4902 = Unknown chain
+    if (e?.code !== 4902) throw e;
+    await window.ethereum.request({
+      method: "wallet_addEthereumChain",
+      params: [OPBNB],
+    });
+    // add 후 switch는 지갑이 알아서 되거나, 필요시 다시 switch 호출
+  }
+}
+
   // =========================
   // DOM helpers
   // =========================
@@ -182,7 +215,7 @@
 
   const ensureConnected = async () => {
     if (!window.ethereum) throw new Error("지갑(메타마스크) 없음");
-
+   await ensureOpBNB();
     provider = new ethers.BrowserProvider(window.ethereum);
     await provider.send("eth_requestAccounts", []);
     signer = await provider.getSigner();
