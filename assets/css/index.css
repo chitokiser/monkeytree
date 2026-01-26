@@ -183,6 +183,34 @@
 }
 
 /* =========================================================
+   MY PORTS TOTAL (강조)
+========================================================= */
+.my-ports-total{
+  margin:10px 0 12px;
+  border:1px solid rgba(124,255,209,.30);
+  background:linear-gradient(180deg, rgba(124,255,209,.14), rgba(0,0,0,.18));
+  border-radius:16px;
+  padding:12px 14px;
+}
+
+.my-ports-total .t{
+  font-size:12px;
+  color:rgba(234,241,255,.78);
+  letter-spacing:.2px;
+}
+
+.my-ports-total .v{
+  font-size:22px;
+  margin-top:6px;
+}
+
+.my-ports-total .s{
+  margin-top:6px;
+  font-size:12px;
+  color:var(--muted);
+}
+
+/* =========================================================
    TOOLTIP (?)
 ========================================================= */
 .tip{

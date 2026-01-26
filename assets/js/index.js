@@ -471,6 +471,37 @@ async function ensureOpBNB() {
 
     mine.sort((a, b) => a - b);
 
+    // 내 화분(포트) 가치 합산 (getvalue 총합)
+    let totalValueWei = 0n;
+    if (mine.length > 0) {
+      try {
+        const values = await mapLimit(mine, 10, async (n) => {
+          const v = await contract.getvalue(n);
+          return BigInt(v ?? 0n);
+        });
+        totalValueWei = values.reduce((acc, v) => acc + v, 0n);
+      } catch {
+        // 합산 실패해도 나머지 UI는 계속
+        totalValueWei = 0n;
+      }
+    }
+
+    // 강조 박스 업데이트
+    const totalBox = $("myPortsTotal");
+    if (totalBox) {
+      const vEl = totalBox.querySelector(".v");
+      const sEl = totalBox.querySelector(".s");
+
+      if (mine.length === 0) {
+        if (vEl) vEl.textContent = "0 HEX";
+        if (sEl) sEl.textContent = "현재 내 소유 포트가 없습니다.";
+      } else {
+        if (vEl) vEl.textContent = fmtHex(totalValueWei, 4);
+        if (sEl) sEl.textContent = `내 포트 ${mine.length}개 가치 합산 (getvalue 기준)`;
+        if (vEl) vEl.classList.add("onchain");
+      }
+    }
+
     const box = $("myPortsBox");
     if (box) {
       if (mine.length === 0) {
