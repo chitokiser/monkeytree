@@ -1,6 +1,10 @@
 // /assets/js/index.js
 (() => {
   const ethers = window.ethers;
+  if (!ethers) {
+    alert("ethers 로딩 실패: 네트워크 또는 CDN 차단 여부 확인 필요");
+    return;
+  }
 
   // =========================
   // Contract
@@ -9,7 +13,6 @@
 
   const ABI = [
     "function HEX() view returns (address)",
-
     "function price() view returns (uint256)",
     "function remain() view returns (uint8)",
     "function tax() view returns (uint256)",
@@ -30,10 +33,8 @@
     "function seeding()",
     "function choice(uint8 winnum)",
     "function buyTicket(uint256 qty)",
-
     "function TICKET_PRICE() view returns (uint256)",
 
-    // event
     "event farmnum(uint256 winnum)",
   ];
 
@@ -49,44 +50,46 @@
   // Images
   // =========================
   const IMG = {
-    empty: "assets/img/tree/seed.png",   // 화분(빈포트 / 방금심음)
-    sprout: "assets/img/tree/seed2.png", // 새싹
-    tree: "assets/img/tree/seed3.png",   // 나무
-    fruit: "assets/img/tree/hex.png",    // 열매(HEX)
+    empty: "assets/img/tree/seed.png",
+    sprout: "assets/img/tree/seed2.png",
+    tree: "assets/img/tree/seed3.png",
+    fruit: "assets/img/tree/hex.png",
   };
 
+  // =========================
+  // Network (opBNB)
+  // =========================
   const OPBNB = {
-  chainId: "0xCC", // 204
-  chainName: "opBNB Mainnet",
-  nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
-  rpcUrls: ["https://opbnb-mainnet-rpc.bnbchain.org"],
-  blockExplorerUrls: ["https://opbnbscan.com"],
-};
+    chainId: "0xCC", // 204
+    chainName: "opBNB Mainnet",
+    nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
+    rpcUrls: ["https://opbnb-mainnet-rpc.bnbchain.org"],
+    blockExplorerUrls: ["https://opbnbscan.com"],
+  };
 
-async function ensureOpBNB() {
-  if (!window.ethereum) throw new Error("지갑(메타마스크) 없음");
+  // 읽기 전용(지갑 없이도 항상 조회 가능)
+  const publicProvider = new ethers.JsonRpcProvider(OPBNB.rpcUrls[0]);
 
-  const cur = await window.ethereum.request({ method: "eth_chainId" });
-  if (cur && cur.toLowerCase() === OPBNB.chainId.toLowerCase()) return;
+  async function ensureOpBNB() {
+    if (!window.ethereum) throw new Error("지갑(메타마스크/래비) 없음");
 
-  // 1) 우선 체인 전환 시도
-  try {
-    await window.ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: OPBNB.chainId }],
-    });
-    return;
-  } catch (e) {
-    // 2) 체인이 없으면 추가 후 전환
-    // Metamask: 4902 = Unknown chain
-    if (e?.code !== 4902) throw e;
-    await window.ethereum.request({
-      method: "wallet_addEthereumChain",
-      params: [OPBNB],
-    });
-    // add 후 switch는 지갑이 알아서 되거나, 필요시 다시 switch 호출
+    const cur = await window.ethereum.request({ method: "eth_chainId" });
+    if (cur && cur.toLowerCase() === OPBNB.chainId.toLowerCase()) return;
+
+    try {
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: OPBNB.chainId }],
+      });
+      return;
+    } catch (e) {
+      if (e?.code !== 4902) throw e;
+      await window.ethereum.request({
+        method: "wallet_addEthereumChain",
+        params: [OPBNB],
+      });
+    }
   }
-}
 
   // =========================
   // DOM helpers
@@ -105,7 +108,6 @@ async function ensureOpBNB() {
     el.textContent = txt ?? "";
   };
 
-  // 온체인 네온 표기
   const setOnchain = (id, txt, soft = false) => {
     const el = $(id);
     if (!el) return;
@@ -152,25 +154,20 @@ async function ensureOpBNB() {
   };
 
   // =========================
-  // 성장 판단 (value/depo 기준)
-  // - 방금 심은 상태: value <= depo => seed1(화분)만
+  // 성장 판단
   // =========================
   const getStageByValue = (owner, valueWei, depoWei) => {
-    // 빈포트: owner 0 이거나 depo 0이면 seed1(화분)만
     if (!owner || owner === ethers.ZeroAddress) return { base: IMG.empty, fruits: 0 };
     if (!depoWei || BigInt(depoWei) === 0n) return { base: IMG.empty, fruits: 0 };
 
     const v = BigInt(valueWei ?? 0n);
     const d = BigInt(depoWei ?? 0n);
 
-    // 방금 심은 상태(또는 value가 아직 안 커짐)
     if (v <= d) return { base: IMG.empty, fruits: 0 };
 
-    // r100 = (value/depo)*100
     const r100 = (v * 100n) / d;
 
-    // seed2(새싹) / seed3(나무) + 열매 단계
-    if (r100 < 120n) return { base: IMG.sprout, fruits: 0 }; // 1.00~1.19배
+    if (r100 < 120n) return { base: IMG.sprout, fruits: 0 };
     if (r100 < 150n) return { base: IMG.tree, fruits: 0 };
     if (r100 < 180n) return { base: IMG.tree, fruits: 1 };
     if (r100 < 220n) return { base: IMG.tree, fruits: 2 };
@@ -195,46 +192,64 @@ async function ensureOpBNB() {
   }
 
   // =========================
-  // Web3 state
+  // Web3 state (read/write 분리)
   // =========================
-  let provider = null;
+  let walletProvider = null;
   let signer = null;
-  let contract = null;
   let account = null;
 
-  let hexToken = null;
+  // 읽기 전용 컨트랙트(항상 사용)
+  const readContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, publicProvider);
+
+  // 쓰기 전용 컨트랙트(지갑 연결 시 생성)
+  let writeContract = null;
+
+  // HEX (읽기/쓰기 각각)
   let HEX_ADDRESS = null;
+  let readHexToken = null;
+  let writeHexToken = null;
 
   // event parser
   const iface = new ethers.Interface(ABI);
 
   const refreshHeaderBadges = () => {
     setText("addrBadge", account ? `지갑: ${shortAddr(account)}` : "지갑: 미연결");
-    setText("netBadge", "네트워크: opBNB");
+    setText("netBadge", account ? "네트워크: opBNB" : "네트워크: opBNB (조회만)");
   };
+
+  async function initReadOnly() {
+    // HEX 주소는 한번만 로드
+    if (!HEX_ADDRESS) {
+      HEX_ADDRESS = await readContract.HEX();
+      readHexToken = new ethers.Contract(HEX_ADDRESS, ERC20_ABI, publicProvider);
+    }
+  }
 
   const ensureConnected = async () => {
-    if (!window.ethereum) throw new Error("지갑(메타마스크) 없음");
-   await ensureOpBNB();
-    provider = new ethers.BrowserProvider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    signer = await provider.getSigner();
+    if (!window.ethereum) throw new Error("지갑(메타마스크/래비) 없음");
+
+    await ensureOpBNB();
+
+    walletProvider = new ethers.BrowserProvider(window.ethereum);
+    await walletProvider.send("eth_requestAccounts", []);
+    signer = await walletProvider.getSigner();
     account = await signer.getAddress();
 
-    contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+    writeContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
-    // HEX 주소 자동 로딩
-    HEX_ADDRESS = await contract.HEX();
-    hexToken = new ethers.Contract(HEX_ADDRESS, ERC20_ABI, signer);
+    // HEX 주소/컨트랙트 준비
+    if (!HEX_ADDRESS) HEX_ADDRESS = await readContract.HEX();
+    if (!readHexToken) readHexToken = new ethers.Contract(HEX_ADDRESS, ERC20_ABI, publicProvider);
+    writeHexToken = new ethers.Contract(HEX_ADDRESS, ERC20_ABI, signer);
 
-    return { provider, signer, contract, account, hexToken, HEX_ADDRESS };
+    return true;
   };
 
   // =========================
-  // Summary (onchain values)
+  // Summary (onchain values) - 항상 readContract로 조회
   // =========================
   const refreshSummary = async () => {
-    if (!contract) return;
+    await initReadOnly();
 
     const [
       priceWei,
@@ -247,20 +262,19 @@ async function ensureOpBNB() {
       withdrawnTodayWei,
       dayBalanceWei,
     ] = await Promise.all([
-      contract.price(),
-      contract.remain(),
-      contract.rate(),
-      contract.tax(),
-      contract.pllength(),
-      contract.g1(),
-      contract.dailyCap(),
-      contract.withdrawnToday(),
-      contract.dayBalance(),
+      readContract.price(),
+      readContract.remain(),
+      readContract.rate(),
+      readContract.tax(),
+      readContract.pllength(),
+      readContract.g1(),
+      readContract.dailyCap(),
+      readContract.withdrawnToday(),
+      readContract.dayBalance(),
     ]);
 
     setText("updatedAt", new Date().toLocaleString());
 
-    // 온체인 값은 네온
     setOnchain("mPrice", fmtHex(priceWei, 4));
     setOnchain("mRemain", String(remain));
     setOnchain("mRate", String(rate));
@@ -271,18 +285,24 @@ async function ensureOpBNB() {
     setOnchain("mWithdrawnToday", fmtHex(withdrawnTodayWei, 4));
     setOnchain("mDayBalance", fmtHex(dayBalanceWei, 4));
 
-    if (account && hexToken) {
+    // 내 정보는 지갑 연결된 경우만
+    if (account) {
       const [myPayWei, myTickets, allowt, myHexWei] = await Promise.all([
-        contract.mypay(account),
-        contract.mytiket(account),
-        contract.allowt(account),
-        hexToken.balanceOf(account),
+        readContract.mypay(account),
+        readContract.mytiket(account),
+        readContract.allowt(account),
+        readHexToken.balanceOf(account),
       ]);
 
       setOnchain("mMyPay", fmtHex(myPayWei, 4), true);
       setOnchain("mMyTickets", String(myTickets), true);
       setOnchain("mAllowt", fmtTs(allowt), true);
       setOnchain("mMyHex", fmtHex(myHexWei, 4), true);
+    } else {
+      setText("mMyPay", "-");
+      setText("mMyTickets", "-");
+      setText("mAllowt", "-");
+      setText("mMyHex", "-");
     }
 
     setText("portsMeta", `remain: ${remain}`);
@@ -314,7 +334,7 @@ async function ensureOpBNB() {
       setNote("txBox", "포트 번호를 입력하세요.");
       return;
     }
-    const [p, v] = await Promise.all([contract.port(n), contract.getvalue(n)]);
+    const [p, v] = await Promise.all([readContract.port(n), readContract.getvalue(n)]);
 
     setText("portChip", `port: ${n}`);
     setOnchain("pOwner", p.owner && p.owner !== ethers.ZeroAddress ? p.owner : "-", true);
@@ -324,46 +344,42 @@ async function ensureOpBNB() {
   };
 
   // =========================
-  // Approve helper
+  // Approve helper (쓰기 전용)
   // =========================
   const approveHexAndWait = async (amountWei) => {
-    if (!hexToken) throw new Error("HEX 토큰 연결 안됨");
+    if (!account || !writeHexToken) throw new Error("지갑 연결 필요");
 
-    const cur = await hexToken.allowance(account, CONTRACT_ADDRESS);
+    const cur = await readHexToken.allowance(account, CONTRACT_ADDRESS);
     if (cur >= amountWei) return { skipped: true, tx: null, allowance: cur };
 
-    const tx = await hexToken.approve(CONTRACT_ADDRESS, amountWei);
+    const tx = await writeHexToken.approve(CONTRACT_ADDRESS, amountWei);
     await tx.wait();
 
-    const after = await hexToken.allowance(account, CONTRACT_ADDRESS);
+    const after = await readHexToken.allowance(account, CONTRACT_ADDRESS);
     return { skipped: false, tx, allowance: after };
   };
 
   // =========================
-  // Event parse: farmnum(winnum)
+  // Event parse
   // =========================
   const getFarmnumFromReceipt = (receipt) => {
     if (!receipt?.logs) return null;
-
     for (const log of receipt.logs) {
       if (!log?.address) continue;
       if (log.address.toLowerCase() !== CONTRACT_ADDRESS.toLowerCase()) continue;
-
       try {
         const parsed = iface.parseLog(log);
         if (parsed?.name === "farmnum") {
           const w = parsed.args?.winnum;
           return Number(w);
         }
-      } catch {
-        // ignore
-      }
+      } catch {}
     }
     return null;
   };
 
   // =========================
-  // Render ports grid
+  // Render ports grid (항상 readContract로 조회)
   // =========================
   const renderPorts = async (remain) => {
     const grid = $("portsGrid");
@@ -372,7 +388,6 @@ async function ensureOpBNB() {
 
     const nums = Array.from({ length: remain }, (_, i) => i + 1);
 
-    // skeleton
     for (const n of nums) {
       const card = document.createElement("div");
       card.className = "port-card";
@@ -400,19 +415,19 @@ async function ensureOpBNB() {
       grid.appendChild(card);
     }
 
-    // load
-    await mapLimit(nums, 12, async (num) => {
-      const [p, v] = await Promise.all([contract.port(num), contract.getvalue(num)]);
+    // 모바일 안정성을 위해 동시성 조금 낮춤
+    const conc = window.innerWidth <= 680 ? 6 : 12;
+
+    await mapLimit(nums, conc, async (num) => {
+      const [p, v] = await Promise.all([readContract.port(num), readContract.getvalue(num)]);
 
       const card = grid.querySelector(`.port-card[data-port="${num}"]`);
       if (!card) return;
 
       const owner = p.owner;
-
       const ownerEl = card.querySelector(".port-owner");
       if (ownerEl) ownerEl.textContent = owner && owner !== ethers.ZeroAddress ? shortAddr(owner) : "빈포트";
 
-      // ✅ value/depo 기반 단계
       const { base, fruits } = getStageByValue(owner, v, p.depo);
 
       const baseImg = card.querySelector("img.tree-base");
@@ -435,58 +450,53 @@ async function ensureOpBNB() {
         mini[1].textContent = String(p.depon);
         mini[2].textContent = fmtHex(v, 3);
 
-        // mini도 온체인 네온
         mini[0].classList.add("onchain-soft");
         mini[1].classList.add("onchain-soft");
         mini[2].classList.add("onchain-soft");
       }
     });
 
-    // 렌더 후 내 포트 자동 표시
     if (account && $("myPortsBox")) {
       try {
         await scanMyPorts(false);
-      } catch {
-        // ignore
-      }
+      } catch {}
     }
   };
 
   // =========================
-  // Scan my ports
+  // Scan my ports (readContract 기반)
   // =========================
   const scanMyPorts = async (showMsg = true) => {
-    if (!contract || !account) throw new Error("지갑 연결 필요");
+    if (!account) throw new Error("지갑 연결 필요");
 
-    const remain = Number(await contract.remain());
+    const remain = Number(await readContract.remain());
     const nums = Array.from({ length: remain }, (_, i) => i + 1);
 
     if (showMsg) setNote("myPortsBox", "내 포트 검색중…");
 
     const mine = [];
-    await mapLimit(nums, 12, async (n) => {
-      const p = await contract.port(n);
+    const conc = window.innerWidth <= 680 ? 6 : 12;
+
+    await mapLimit(nums, conc, async (n) => {
+      const p = await readContract.port(n);
       if (p.owner && p.owner.toLowerCase() === account.toLowerCase()) mine.push(n);
     });
 
     mine.sort((a, b) => a - b);
 
-    // 내 화분(포트) 가치 합산 (getvalue 총합)
     let totalValueWei = 0n;
     if (mine.length > 0) {
       try {
-        const values = await mapLimit(mine, 10, async (n) => {
-          const v = await contract.getvalue(n);
+        const values = await mapLimit(mine, 6, async (n) => {
+          const v = await readContract.getvalue(n);
           return BigInt(v ?? 0n);
         });
         totalValueWei = values.reduce((acc, v) => acc + v, 0n);
       } catch {
-        // 합산 실패해도 나머지 UI는 계속
         totalValueWei = 0n;
       }
     }
 
-    // 강조 박스 업데이트
     const totalBox = $("myPortsTotal");
     if (totalBox) {
       const vEl = totalBox.querySelector(".v");
@@ -524,7 +534,6 @@ async function ensureOpBNB() {
       }
     }
 
-    // highlight cards
     const grid = $("portsGrid");
     if (grid) {
       grid.querySelectorAll(".port-card").forEach((c) => c.classList.remove("mine"));
@@ -535,6 +544,14 @@ async function ensureOpBNB() {
     }
 
     return mine;
+  };
+
+  // =========================
+  // Refresh all (조회는 항상 됨)
+  // =========================
+  const refreshAll = async () => {
+    const { remain } = await refreshSummary();
+    await renderPorts(remain);
   };
 
   // =========================
@@ -555,6 +572,7 @@ async function ensureOpBNB() {
     $("btnRefresh")?.addEventListener("click", async () => {
       try {
         await refreshAll();
+        setNote("noteBox", account ? "새로고침 완료" : "조회 새로고침 완료 (지갑 없이 조회)");
       } catch (e) {
         setNote("noteBox", parseEthersError(e));
       }
@@ -562,7 +580,6 @@ async function ensureOpBNB() {
 
     $("btnReadPort")?.addEventListener("click", async () => {
       try {
-        if (!contract) await ensureConnected();
         await readPortToPanel();
         setNote("txBox", "조회 완료");
       } catch (e) {
@@ -572,31 +589,29 @@ async function ensureOpBNB() {
 
     $("btnMyPorts")?.addEventListener("click", async () => {
       try {
-        if (!contract) await ensureConnected();
         await scanMyPorts(true);
       } catch (e) {
         setNote("myPortsBox", parseEthersError(e));
       }
     });
 
-    // seeding: farmnum 이벤트로 포트번호 출력
     $("btnSeeding")?.addEventListener("click", async () => {
       try {
-        if (!contract) await ensureConnected();
-
+        if (!writeContract) throw new Error("지갑 연결 필요");
         setNote("txBox", "랜덤 심기 tx 전송중…");
-        const tx = await contract.seeding();
+
+        const tx = await writeContract.seeding();
         setNote("txBox", `tx: ${tx.hash} (확정 대기중…)`);
 
         const receipt = await tx.wait();
-
         const winnum = getFarmnumFromReceipt(receipt);
+
         if (winnum) {
           setNote("txBox", `랜덤 심기 완료: PORT #${winnum} 에 씨앗을 심었습니다.`);
           focusPort(winnum);
           await readPortToPanel();
         } else {
-          setNote("txBox", `랜덤 심기 완료. (farmnum 이벤트를 찾지 못함) tx: ${tx.hash}`);
+          setNote("txBox", `랜덤 심기 완료. tx: ${tx.hash}`);
         }
 
         await refreshAll();
@@ -607,11 +622,11 @@ async function ensureOpBNB() {
 
     $("btnChoice")?.addEventListener("click", async () => {
       try {
-        if (!contract) await ensureConnected();
+        if (!writeContract) throw new Error("지갑 연결 필요");
         const n = Number($("inChoiceNum")?.value || 0);
         if (!n) throw new Error("지정 포트 번호 필요");
 
-        const tx = await contract.choice(n);
+        const tx = await writeContract.choice(n);
         setNote("txBox", `지정 심기 tx: ${tx.hash}`);
         await tx.wait();
 
@@ -626,8 +641,8 @@ async function ensureOpBNB() {
 
     $("btnWithdraw")?.addEventListener("click", async () => {
       try {
-        if (!contract) await ensureConnected();
-        const tx = await contract.withdraw();
+        if (!writeContract) throw new Error("지갑 연결 필요");
+        const tx = await writeContract.withdraw();
         setNote("txBox", `출금 tx: ${tx.hash}`);
       } catch (e) {
         setNote("txBox", parseEthersError(e));
@@ -636,17 +651,16 @@ async function ensureOpBNB() {
 
     $("btnCharge")?.addEventListener("click", async () => {
       try {
-        if (!contract) await ensureConnected();
+        if (!writeContract || !account) throw new Error("지갑 연결 필요");
 
         const amt = String($("inCharge")?.value || "").trim();
         if (!amt) throw new Error("충전 수량 필요");
-
         const wei = ethers.parseUnits(amt, 18);
 
-        const alw = await hexToken.allowance(account, CONTRACT_ADDRESS);
+        const alw = await readHexToken.allowance(account, CONTRACT_ADDRESS);
         if (alw < wei) throw new Error("승인이 부족합니다. 먼저 “충전 승인”을 눌러주세요.");
 
-        const tx = await contract.charge(wei);
+        const tx = await writeContract.charge(wei);
         setNote("txBox", `충전 tx: ${tx.hash}`);
       } catch (e) {
         setNote("txBox", parseEthersError(e));
@@ -655,12 +669,12 @@ async function ensureOpBNB() {
 
     $("btnBuyTicket")?.addEventListener("click", async () => {
       try {
-        if (!contract) await ensureConnected();
+        if (!writeContract) throw new Error("지갑 연결 필요");
 
         const qty = Number($("inTicketQty")?.value || 0);
         if (!qty) throw new Error("티켓 수량 필요");
 
-        const tx = await contract.buyTicket(qty);
+        const tx = await writeContract.buyTicket(qty);
         setNote("txBox", `티켓 구매 tx: ${tx.hash}`);
       } catch (e) {
         setNote("txBox", parseEthersError(e));
@@ -669,11 +683,10 @@ async function ensureOpBNB() {
 
     $("btnApproveCharge")?.addEventListener("click", async () => {
       try {
-        if (!contract) await ensureConnected();
+        if (!writeContract) throw new Error("지갑 연결 필요");
 
         const amt = String($("inCharge")?.value || "").trim();
         if (!amt) throw new Error("충전 수량 필요");
-
         const wei = ethers.parseUnits(amt, 18);
 
         setNote("txBox", "충전 승인 진행중…");
@@ -691,12 +704,12 @@ async function ensureOpBNB() {
 
     $("btnApproveTicket")?.addEventListener("click", async () => {
       try {
-        if (!contract) await ensureConnected();
+        if (!writeContract) throw new Error("지갑 연결 필요");
 
         const qty = Number($("inTicketQty")?.value || 0);
         if (!qty) throw new Error("티켓 수량 필요");
 
-        const priceWei = await contract.TICKET_PRICE();
+        const priceWei = await readContract.TICKET_PRICE();
         const need = BigInt(qty) * BigInt(priceWei);
 
         setNote("txBox", "티켓 구매 승인 진행중…");
@@ -714,32 +727,34 @@ async function ensureOpBNB() {
   };
 
   // =========================
-  // Refresh all
-  // =========================
-  const refreshAll = async () => {
-    if (!contract) return;
-    const { remain } = await refreshSummary();
-    await renderPorts(remain);
-  };
-
-  // =========================
   // init
   // =========================
   bindUI();
   refreshHeaderBadges();
 
-  // auto connect if already connected
+  // 모바일/PC 공통: 첫 화면에서 일단 "조회"는 무조건 실행
   (async () => {
+    try {
+      await refreshAll();
+      setNote("noteBox", "조회 모드로 로딩 완료 (지갑 연결하면 실행 가능)");
+    } catch (e) {
+      setNote("noteBox", `조회 실패: ${parseEthersError(e)}`);
+    }
+  })();
+
+  // 자동 연결(권한 이미 준 경우만)
+  ;(async () => {
     try {
       if (!window.ethereum) return;
       const accs = await window.ethereum.request({ method: "eth_accounts" });
       if (!accs || accs.length === 0) return;
-
       await ensureConnected();
       refreshHeaderBadges();
+      setNote("noteBox", `자동 연결됨: ${shortAddr(account)}`);
       await refreshAll();
-    } catch {
-      // ignore
+    } catch (e) {
+      // 자동 연결은 실패해도 조회는 이미 돌아가므로 에러만 표시
+      setNote("noteBox", `자동 연결 실패(조회는 정상): ${parseEthersError(e)}`);
     }
   })();
 })();
