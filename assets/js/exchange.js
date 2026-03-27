@@ -613,7 +613,9 @@
     const raw = $('inSetPrice')?.value?.trim();
     if (!raw) { alert('가격을 입력하세요.'); return; }
     try {
-      const price = BigInt(raw);
+      // HEX 단위 소수 입력 (예: 0.0120) → wei 변환
+      const price = ethers.parseUnits(raw, quoteDec);
+      if (price <= 0n) { alert('0보다 큰 값을 입력하세요.'); return; }
       setAdminNote('시장가 변경 중...');
       const tx = await writeExch.setMarketPrice(price);
       await tx.wait();
