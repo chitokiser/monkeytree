@@ -216,7 +216,7 @@
         readExch.totalFeeQuote(),
       ]);
 
-      setText('mktPrice', fmt(price, quoteDec) + ' ' + quoteSym + ' / 1 ' + mktSym);
+      setText('mktPrice', fmt(price, quoteDec, 4) + ' ' + quoteSym + ' / 1 ' + mktSym);
       const actNum = Number(actVal);
       const actLabels = ['⛔ 거래중단', '✅ 시장가 가능', '✅ 전체 가능'];
       setText('mktStatus', actLabels[actNum] || '-');
