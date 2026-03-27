@@ -581,6 +581,7 @@
     if (!account) return;
     try {
       const adminAddr = await readExch.admin();
+      console.log('[admin] contract admin:', adminAddr, '/ connected:', account);
       if (adminAddr.toLowerCase() === account.toLowerCase()) {
         const panel = $('adminPanel');
         if (panel) panel.style.display = '';
@@ -589,7 +590,7 @@
         const sel = $('inSetAct');
         if (sel) sel.value = actVal.toString();
       }
-    } catch (e) { /* not admin or query failed */ }
+    } catch (e) { console.warn('[admin] checkAdmin 오류:', e); }
   }
 
   async function doSetAct() {
@@ -958,6 +959,22 @@
       await Promise.all([loadMarketState(), loadOrderBook()]);
       initChartInstance();
       loadChartData(); // async, non-blocking
+
+      // MetaMask가 이미 연결된 상태라면 자동으로 계정 확인 후 관리자 패널 노출
+      if (window.ethereum) {
+        const accs = await window.ethereum.request({ method: 'eth_accounts' }).catch(() => []);
+        if (accs?.length) {
+          const web3Provider = new ethers.BrowserProvider(window.ethereum);
+          account = accs[0];
+          signer = await web3Provider.getSigner();
+          writeExch  = new ethers.Contract(EXCHANGE_ADDRESS, EXCHANGE_ABI, signer);
+          writeMkt   = new ethers.Contract(mktAddr, ERC20_ABI, signer);
+          writeQuote = new ethers.Contract(quoteAddr, ERC20_ABI, signer);
+          updateAddrBadge();
+          await loadMyOrders();
+          await checkAdmin();
+        }
+      }
     } catch (e) {
       console.error('[exchange] init 오류', e);
     }
