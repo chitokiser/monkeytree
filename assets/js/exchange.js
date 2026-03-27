@@ -24,6 +24,10 @@
         'function cancelOrder(uint256 orderId) returns (bool)',
         'function fillLimitBuy(uint256 orderId, uint256 mktAmount) returns (bool)',
         'function fillLimitSell(uint256 orderId, uint256 mktAmount, uint256 maxTotalQuote) returns (bool)',
+        'function setAct(uint8 nextAct)',
+        'function setMarketPrice(uint256 nextPrice)',
+        'function addMarketLiquidity(uint256 mktAmount, uint256 quoteAmount)',
+        'function removeMarketLiquidity(address to, uint256 mktAmount, uint256 quoteAmount)',
       ]);
       let jumpTx;
       try {
@@ -77,6 +81,11 @@
     'function cancelOrder(uint256 orderId) returns (bool)',
     'function fillLimitBuy(uint256 orderId, uint256 mktAmount) returns (bool)',
     'function fillLimitSell(uint256 orderId, uint256 mktAmount, uint256 maxTotalQuote) returns (bool)',
+    'function admin() view returns (address)',
+    'function setAct(uint8 nextAct)',
+    'function setMarketPrice(uint256 nextPrice)',
+    'function addMarketLiquidity(uint256 mktAmount, uint256 quoteAmount)',
+    'function removeMarketLiquidity(address to, uint256 mktAmount, uint256 quoteAmount)',
   ];
 
   const ERC20_ABI = [
@@ -534,6 +543,104 @@
     }
   }
 
+  /* ── Admin helpers ───────────────────────────────────────────────────── */
+  const setAdminNote = v => { const el = $('adminNote'); if (el) el.textContent = v || ''; };
+
+  async function checkAdmin() {
+    if (!account) return;
+    try {
+      const adminAddr = await readExch.admin();
+      if (adminAddr.toLowerCase() === account.toLowerCase()) {
+        const panel = $('adminPanel');
+        if (panel) panel.style.display = '';
+        // Pre-select current act
+        const actVal = Number(await readExch.act());
+        const sel = $('inSetAct');
+        if (sel) sel.value = actVal.toString();
+      }
+    } catch (e) { /* not admin or query failed */ }
+  }
+
+  async function doSetAct() {
+    if (!await ensureConnected()) return;
+    const val = $('inSetAct')?.value;
+    if (val == null) return;
+    try {
+      setAdminNote('거래 상태 변경 중...');
+      const tx = await writeExch.setAct(Number(val));
+      await tx.wait();
+      setAdminNote('✅ 거래 상태 변경 완료: act = ' + val);
+      await loadMarketState();
+    } catch (e) {
+      setAdminNote('❌ 오류: ' + (e.reason || e.message));
+    }
+  }
+
+  async function doSetPrice() {
+    if (!await ensureConnected()) return;
+    const raw = $('inSetPrice')?.value?.trim();
+    if (!raw) { alert('가격을 입력하세요.'); return; }
+    try {
+      const price = BigInt(raw);
+      setAdminNote('시장가 변경 중...');
+      const tx = await writeExch.setMarketPrice(price);
+      await tx.wait();
+      setAdminNote('✅ 시장가 변경 완료: ' + fmt(price, quoteDec) + ' ' + quoteSym);
+      await loadMarketState();
+    } catch (e) {
+      setAdminNote('❌ 오류: ' + (e.reason || e.message));
+    }
+  }
+
+  async function doAddLiquidity() {
+    if (!await ensureConnected()) return;
+    const mktAmt = parse($('inAddMkt')?.value || '0', mktDec) ?? 0n;
+    const quoteAmt = parse($('inAddQuote')?.value || '0', quoteDec) ?? 0n;
+    if (mktAmt <= 0n && quoteAmt <= 0n) { alert('MKT 또는 HEX 수량을 입력하세요.'); return; }
+    try {
+      if (mktAmt > 0n) {
+        setAdminNote(mktSym + ' 승인 중...');
+        const appTx = await writeMkt.approve(EXCHANGE_ADDRESS, mktAmt);
+        await appTx.wait();
+      }
+      if (quoteAmt > 0n) {
+        setAdminNote(quoteSym + ' 승인 중...');
+        const appTx = await writeQuote.approve(EXCHANGE_ADDRESS, quoteAmt);
+        await appTx.wait();
+      }
+      setAdminNote('유동성 공급 중...');
+      const tx = await writeExch.addMarketLiquidity(mktAmt, quoteAmt);
+      await tx.wait();
+      setAdminNote(
+        '✅ 유동성 공급 완료! MKT: ' + fmt(mktAmt, mktDec) +
+        '  HEX: ' + fmt(quoteAmt, quoteDec)
+      );
+      $('inAddMkt').value = '';
+      $('inAddQuote').value = '';
+      await loadMarketState();
+    } catch (e) {
+      setAdminNote('❌ 오류: ' + (e.reason || e.message));
+    }
+  }
+
+  async function doRemoveLiquidity() {
+    if (!await ensureConnected()) return;
+    const mktAmt = parse($('inRmMkt')?.value || '0', mktDec) ?? 0n;
+    const quoteAmt = parse($('inRmQuote')?.value || '0', quoteDec) ?? 0n;
+    if (mktAmt <= 0n && quoteAmt <= 0n) { alert('회수할 MKT 또는 HEX 수량을 입력하세요.'); return; }
+    try {
+      setAdminNote('유동성 회수 중...');
+      const tx = await writeExch.removeMarketLiquidity(account, mktAmt, quoteAmt);
+      await tx.wait();
+      setAdminNote('✅ 유동성 회수 완료!');
+      $('inRmMkt').value = '';
+      $('inRmQuote').value = '';
+      await loadMarketState();
+    } catch (e) {
+      setAdminNote('❌ 오류: ' + (e.reason || e.message));
+    }
+  }
+
   /* ── Global callbacks ────────────────────────────────────────────────── */
   window._exchCancel = doCancelOrder;
   window._exchFillBuy = doFillLimitBuy;
@@ -562,6 +669,7 @@
         await loadMarketState();
         await loadOrderBook();
         await loadMyOrders();
+        await checkAdmin();
       }
     });
 
@@ -585,6 +693,12 @@
 
     $('inBuyMkt')?.addEventListener('input', previewBuy);
     $('inSellMkt')?.addEventListener('input', previewSell);
+
+    // Admin buttons
+    $('btnSetAct')?.addEventListener('click', doSetAct);
+    $('btnSetPrice')?.addEventListener('click', doSetPrice);
+    $('btnAddLiquidity')?.addEventListener('click', doAddLiquidity);
+    $('btnRemoveLiquidity')?.addEventListener('click', doRemoveLiquidity);
   }
 
   /* ── Jump connected ──────────────────────────────────────────────────── */
@@ -593,6 +707,7 @@
       await loadMarketState();
       await loadOrderBook();
       await loadMyOrders();
+      await checkAdmin();
     }
   });
 

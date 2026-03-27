@@ -267,6 +267,73 @@
         </div>
       </div>
 
+      <!-- ══ Admin Panel (관리자 지갑일 때만 표시) ══════════════════════ -->
+      <div class="card admin-panel" id="adminPanel" style="display:none; margin-top:14px;">
+        <div class="card-h">
+          <div class="card-t" style="color:#ffd166;">⚙️ 관리자 패널</div>
+          <span class="chip" style="font-size:11px; color:#ffd166; border-color:rgba(255,209,102,.35);">Admin Only</span>
+        </div>
+
+        <div class="admin-grid">
+          <!-- 거래 상태 변경 -->
+          <div class="admin-block">
+            <div class="admin-block-title">거래 활성화</div>
+            <div class="admin-block-desc">
+              0 = 중단 &nbsp;|&nbsp; 1 = 시장가 가능 &nbsp;|&nbsp; 2 = 시장가+지정가 가능
+            </div>
+            <div class="admin-row">
+              <select class="input" id="inSetAct" style="max-width:140px;">
+                <option value="0">0 — 중단</option>
+                <option value="1">1 — 시장가</option>
+                <option value="2">2 — 전체</option>
+              </select>
+              <button class="btnx" id="btnSetAct">거래상태 변경</button>
+            </div>
+          </div>
+
+          <!-- 시장가 변경 -->
+          <div class="admin-block">
+            <div class="admin-block-title">시장가 설정</div>
+            <div class="admin-block-desc">
+              1 <span data-sym-mkt>MKT</span> 당 <span data-sym-quote>HEX</span> 가격 (단위: <span data-sym-quote>HEX</span> 최소단위)
+            </div>
+            <div class="admin-row">
+              <input class="input mono" id="inSetPrice" placeholder="예: 5000000" inputmode="decimal" style="max-width:200px;" />
+              <button class="btnx" id="btnSetPrice">시장가 변경</button>
+            </div>
+          </div>
+
+          <!-- 유동성 공급 -->
+          <div class="admin-block">
+            <div class="admin-block-title">유동성 공급 (addMarketLiquidity)</div>
+            <div class="admin-block-desc">
+              컨트랙트에 <span data-sym-mkt>MKT</span>·<span data-sym-quote>HEX</span> 재고를 추가합니다.
+              시장가 거래에 사용됩니다.
+            </div>
+            <div class="admin-row">
+              <input class="input mono" id="inAddMkt" placeholder="MKT 수량" inputmode="decimal" style="max-width:160px;" />
+              <input class="input mono" id="inAddQuote" placeholder="HEX 수량" inputmode="decimal" style="max-width:160px;" />
+              <button class="btnx" id="btnAddLiquidity">유동성 공급</button>
+            </div>
+          </div>
+
+          <!-- 유동성 회수 -->
+          <div class="admin-block">
+            <div class="admin-block-title">유동성 회수 (removeMarketLiquidity)</div>
+            <div class="admin-block-desc">
+              예약되지 않은 재고만 회수 가능합니다.
+            </div>
+            <div class="admin-row">
+              <input class="input mono" id="inRmMkt" placeholder="MKT 수량" inputmode="decimal" style="max-width:160px;" />
+              <input class="input mono" id="inRmQuote" placeholder="HEX 수량" inputmode="decimal" style="max-width:160px;" />
+              <button class="btnx danger" id="btnRemoveLiquidity">유동성 회수</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="note" id="adminNote"></div>
+      </div>
+
     </main>
 
     <div id="site-footer"></div>
