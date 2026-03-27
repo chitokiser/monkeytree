@@ -65,6 +65,8 @@
     'function mkt() view returns (address)',
     'function quoteToken() view returns (address)',
     'function totalFeeQuote() view returns (uint256)',
+    'function quoteBalance() view returns (uint256)',
+    'function mktBalance() view returns (uint256)',
     'function previewMarketBuy(uint256) view returns (uint256 grossQuote, uint256 feeQuote, uint256 totalQuote)',
     'function previewMarketSell(uint256) view returns (uint256 grossQuote, uint256 feeQuote, uint256 netQuote)',
     'function orders(uint256) view returns (uint256 id, address maker, uint8 side, uint256 price, uint256 amount, uint256 remaining, bool active)',
@@ -195,11 +197,14 @@
   async function loadMarketState() {
     try {
       await initContracts();
-      const [price, actVal, availMkt, availQuote] = await Promise.all([
+      const [price, actVal, availMkt, availQuote, cxMkt, cxQuote, totalFee] = await Promise.all([
         readExch.marketPrice(),
         readExch.act(),
         readExch.availableMktForMarket(),
         readExch.availableQuoteForMarket(),
+        readExch.mktBalance(),
+        readExch.quoteBalance(),
+        readExch.totalFeeQuote(),
       ]);
 
       setText('mktPrice', fmt(price, quoteDec) + ' ' + quoteSym + ' / 1 ' + mktSym);
@@ -215,6 +220,10 @@
 
       setText('availMkt', fmt(availMkt, mktDec) + ' ' + mktSym);
       setText('availQuote', fmt(availQuote, quoteDec) + ' ' + quoteSym);
+
+      setText('cxMktBal', fmt(cxMkt, mktDec) + ' ' + mktSym);
+      setText('cxQuoteBal', fmt(cxQuote, quoteDec) + ' ' + quoteSym);
+      setText('cxTotalFee', fmt(totalFee, quoteDec) + ' ' + quoteSym);
 
       if (account) {
         const [myMkt, myQuote] = await Promise.all([
