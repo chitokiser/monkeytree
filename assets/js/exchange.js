@@ -81,6 +81,12 @@
     'function cancelOrder(uint256 orderId) returns (bool)',
     'function fillLimitBuy(uint256 orderId, uint256 mktAmount) returns (bool)',
     'function fillLimitSell(uint256 orderId, uint256 mktAmount, uint256 maxTotalQuote) returns (bool)',
+    // Events (for chart)
+    'event MarketBuy(address indexed user, uint256 mktAmount, uint256 grossQuote, uint256 feeQuote, uint256 totalQuotePaid)',
+    'event MarketSell(address indexed user, uint256 mktAmount, uint256 grossQuote, uint256 feeQuote, uint256 netQuoteReceived)',
+    'event LimitBuyFilled(uint256 indexed orderId, address indexed maker, address indexed seller, uint256 amountFilled, uint256 price, uint256 grossQuote, uint256 feeQuote)',
+    'event LimitSellFilled(uint256 indexed orderId, address indexed maker, address indexed buyer, uint256 amountFilled, uint256 price, uint256 grossQuote, uint256 feeQuote)',
+    'event MarketPriceUpdated(uint256 prevPrice, uint256 nextPrice)',
     'function admin() view returns (address)',
     'function setAct(uint8 nextAct)',
     'function setMarketPrice(uint256 nextPrice)',
@@ -731,14 +737,222 @@
     }
   });
 
+  /* ── Chart ───────────────────────────────────────────────────────────── */
+  const TF_SEC = { '1H': 3600, '4H': 14400, '1D': 86400 };
+  let _chart = null;
+  let _candleSeries = null;
+  let _volumeSeries = null;
+  let _currentTf = '1H';
+  let _cachedTrades = null; // raw trades cache
+
+  function initChartInstance() {
+    const container = $('chartContainer');
+    if (!container || !window.LightweightCharts) return;
+    if (_chart) { _chart.remove(); _chart = null; }
+
+    _chart = LightweightCharts.createChart(container, {
+      width: container.clientWidth,
+      height: 320,
+      layout: {
+        background: { type: 'solid', color: 'transparent' },
+        textColor: 'rgba(234,240,255,0.75)',
+        fontSize: 11,
+      },
+      grid: {
+        vertLines: { color: 'rgba(255,255,255,0.06)' },
+        horzLines: { color: 'rgba(255,255,255,0.06)' },
+      },
+      crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+      rightPriceScale: { borderColor: 'rgba(255,255,255,0.12)' },
+      timeScale: {
+        borderColor: 'rgba(255,255,255,0.12)',
+        timeVisible: true,
+        secondsVisible: _currentTf === '1H',
+      },
+    });
+
+    _candleSeries = _chart.addCandlestickSeries({
+      upColor:     '#26c990',
+      downColor:   '#ef5350',
+      borderVisible: false,
+      wickUpColor:   '#26c990',
+      wickDownColor: '#ef5350',
+    });
+
+    _volumeSeries = _chart.addHistogramSeries({
+      color: 'rgba(124,255,209,0.18)',
+      priceFormat: { type: 'volume' },
+      priceScaleId: 'vol',
+    });
+    _chart.priceScale('vol').applyOptions({
+      scaleMargins: { top: 0.82, bottom: 0 },
+    });
+
+    new ResizeObserver(() => {
+      if (_chart) _chart.applyOptions({ width: container.clientWidth });
+    }).observe(container);
+  }
+
+  async function loadChartData(forceRefresh = false) {
+    const noteEl = $('chartNote');
+    if (noteEl) noteEl.textContent = '데이터 로딩 중...';
+
+    try {
+      await initContracts();
+
+      if (forceRefresh || !_cachedTrades) {
+        const currentBlock = await publicProvider.getBlockNumber();
+        const fromBlock = Math.max(0, currentBlock - 200000); // ~55 hours on opBNB
+
+        if (noteEl) noteEl.textContent = '이벤트 조회 중...';
+
+        const [mBuys, mSells, lBuyFills, lSellFills, priceUpds] = await Promise.all([
+          readExch.queryFilter(readExch.filters.MarketBuy(),         fromBlock).catch(() => []),
+          readExch.queryFilter(readExch.filters.MarketSell(),        fromBlock).catch(() => []),
+          readExch.queryFilter(readExch.filters.LimitBuyFilled(),    fromBlock).catch(() => []),
+          readExch.queryFilter(readExch.filters.LimitSellFilled(),   fromBlock).catch(() => []),
+          readExch.queryFilter(readExch.filters.MarketPriceUpdated(),fromBlock).catch(() => []),
+        ]);
+
+        const allEvts = [...mBuys, ...mSells, ...lBuyFills, ...lSellFills, ...priceUpds];
+
+        // Batch-fetch block timestamps
+        const uniqueBlocks = [...new Set(allEvts.map(e => e.blockNumber))];
+        const blockInfos = await Promise.all(
+          uniqueBlocks.map(n => publicProvider.getBlock(n).catch(() => null))
+        );
+        const tsMap = {};
+        uniqueBlocks.forEach((n, i) => { if (blockInfos[i]) tsMap[n] = blockInfos[i].timestamp; });
+
+        // Build trade list
+        const trades = [];
+
+        const marketPrice = (grossQ, mktAmt) => {
+          const q = parseFloat(ethers.formatUnits(grossQ, quoteDec));
+          const m = parseFloat(ethers.formatUnits(mktAmt, mktDec));
+          return m > 0 ? q / m : 0;
+        };
+
+        for (const e of mBuys) {
+          const ts = tsMap[e.blockNumber]; if (!ts) continue;
+          const p = marketPrice(e.args.grossQuote, e.args.mktAmount); if (p <= 0) continue;
+          const vol = parseFloat(ethers.formatUnits(e.args.mktAmount, mktDec));
+          trades.push({ time: ts, price: p, volume: vol });
+        }
+        for (const e of mSells) {
+          const ts = tsMap[e.blockNumber]; if (!ts) continue;
+          const p = marketPrice(e.args.grossQuote, e.args.mktAmount); if (p <= 0) continue;
+          const vol = parseFloat(ethers.formatUnits(e.args.mktAmount, mktDec));
+          trades.push({ time: ts, price: p, volume: vol });
+        }
+        for (const e of lBuyFills) {
+          const ts = tsMap[e.blockNumber]; if (!ts) continue;
+          const p = marketPrice(e.args.grossQuote, e.args.amountFilled); if (p <= 0) continue;
+          const vol = parseFloat(ethers.formatUnits(e.args.amountFilled, mktDec));
+          trades.push({ time: ts, price: p, volume: vol });
+        }
+        for (const e of lSellFills) {
+          const ts = tsMap[e.blockNumber]; if (!ts) continue;
+          const p = marketPrice(e.args.grossQuote, e.args.amountFilled); if (p <= 0) continue;
+          const vol = parseFloat(ethers.formatUnits(e.args.amountFilled, mktDec));
+          trades.push({ time: ts, price: p, volume: vol });
+        }
+        // Admin price changes
+        for (const e of priceUpds) {
+          const ts = tsMap[e.blockNumber]; if (!ts) continue;
+          const p = parseFloat(fmt(e.args.nextPrice, quoteDec).replace(/,/g, ''));
+          if (p > 0) trades.push({ time: ts, price: p, volume: 0 });
+        }
+
+        trades.sort((a, b) => a.time - b.time);
+        _cachedTrades = trades;
+      }
+
+      renderCandles(_cachedTrades);
+
+    } catch (e) {
+      console.error('[chart] 오류', e);
+      if (noteEl) noteEl.textContent = '차트 로딩 실패: ' + (e.message || '');
+    }
+  }
+
+  function renderCandles(trades) {
+    const noteEl = $('chartNote');
+    if (!_candleSeries) return;
+
+    if (!trades.length) {
+      // No trades – plot current market price as a single candle
+      readExch.marketPrice().then(p => {
+        const pHuman = parseFloat(fmt(p, quoteDec).replace(/,/g, ''));
+        const now = Math.floor(Date.now() / 1000);
+        _candleSeries.setData([{ time: now, open: pHuman, high: pHuman, low: pHuman, close: pHuman }]);
+        _volumeSeries.setData([]);
+        if (noteEl) noteEl.textContent = '거래 내역 없음 — 현재 시장가 기준 표시';
+      }).catch(() => {});
+      return;
+    }
+
+    const tfSec = TF_SEC[_currentTf] || 3600;
+    const buckets = {};
+
+    for (const t of trades) {
+      const key = Math.floor(t.time / tfSec) * tfSec;
+      if (!buckets[key]) {
+        buckets[key] = { time: key, open: t.price, high: t.price, low: t.price, close: t.price, volume: t.volume };
+      } else {
+        const c = buckets[key];
+        if (t.price > c.high) c.high = t.price;
+        if (t.price < c.low)  c.low  = t.price;
+        c.close = t.price;
+        c.volume += t.volume;
+      }
+    }
+
+    const candles = Object.values(buckets).sort((a, b) => a.time - b.time);
+    const volData = candles.map(c => ({
+      time: c.time,
+      value: c.volume,
+      color: c.close >= c.open ? 'rgba(38,201,144,0.25)' : 'rgba(239,83,80,0.25)',
+    }));
+
+    _candleSeries.setData(candles);
+    _volumeSeries.setData(volData);
+    _chart.timeScale().fitContent();
+
+    if (noteEl) {
+      noteEl.textContent = `${candles.length}캔들 · ${trades.filter(t=>t.volume>0).length}거래 · ${_currentTf} 기준`;
+    }
+  }
+
+  function initChartControls() {
+    document.querySelectorAll('.chart-tf').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.chart-tf').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        _currentTf = btn.dataset.tf;
+        if (_chart) {
+          _chart.applyOptions({ timeScale: { secondsVisible: _currentTf === '1H' } });
+        }
+        if (_cachedTrades) renderCandles(_cachedTrades);
+      });
+    });
+
+    $('btnReloadChart')?.addEventListener('click', () => {
+      _cachedTrades = null;
+      loadChartData(true);
+    });
+  }
+
   /* ── Init ────────────────────────────────────────────────────────────── */
   async function init() {
     initTabs();
+    initChartControls();
     bind();
     try {
       await initContracts();
-      await loadMarketState();
-      await loadOrderBook();
+      await Promise.all([loadMarketState(), loadOrderBook()]);
+      initChartInstance();
+      loadChartData(); // async, non-blocking
     } catch (e) {
       console.error('[exchange] init 오류', e);
     }

@@ -1,5 +1,48 @@
 /* /assets/css/exchange.css */
 
+/* ── Chart ───────────────────────────────────────────────────────────── */
+.chart-card { margin-bottom: 18px; }
+
+.chart-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.chart-tf {
+  appearance: none;
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .15s;
+}
+.chart-tf:hover { background: rgba(255,255,255,.10); color: var(--text); }
+.chart-tf.active {
+  background: linear-gradient(180deg, rgba(124,255,209,.22), rgba(255,255,255,.06));
+  border-color: rgba(124,255,209,.40);
+  color: var(--text);
+}
+
+#chartContainer {
+  width: 100%;
+  height: 320px;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.chart-note {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+  padding: 0 2px;
+}
+
 /* ── Ecosystem Banner ───────────────────────────────────────────────── */
 .eco-banner {
   margin-bottom: 20px;
