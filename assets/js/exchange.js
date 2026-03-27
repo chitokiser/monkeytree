@@ -498,16 +498,20 @@
       return;
     }
     el.innerHTML = orders.map(o => {
-      const isMine = account && o.maker.toLowerCase() === account.toLowerCase();
-      const canFill = account && !isMine;
+      const makerLc  = (o.maker || '').toLowerCase();
+      const accountLc = (account || '').toLowerCase();
+      const connected = !!account;
+      const isMine   = connected && !!makerLc && makerLc === accountLc;
+      const canFill  = connected && !isMine;
       return `<div class="book-row${isMine ? ' mine' : ''}">
         <span class="book-id">#${o.id}</span>
         <span class="book-price">${fmt(o.price, quoteDec)}</span>
         <span class="book-amt">${fmt(o.remaining, mktDec)} / ${fmt(o.amount, mktDec)}</span>
         <span class="book-actions">
-          ${isMine ? `<button class="btnx small danger" onclick="window._exchCancel(${o.id})">취소</button>` : ''}
+          ${isMine  ? `<button class="btnx small danger" onclick="window._exchCancel(${o.id})">취소</button>` : ''}
           ${canFill && side === 0 ? `<button class="btnx small" onclick="window._exchFillBuy(${o.id},'${o.remaining}','${o.price}')">팔기</button>` : ''}
           ${canFill && side === 1 ? `<button class="btnx small" onclick="window._exchFillSell(${o.id},'${o.remaining}','${o.price}')">사기</button>` : ''}
+          ${!connected ? `<span style="font-size:11px;color:var(--muted);">연결 필요</span>` : ''}
         </span>
       </div>`;
     }).join('');
