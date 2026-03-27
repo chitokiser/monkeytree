@@ -1,12 +1,57 @@
-/* /assets/css/exchange.css */
+/* /assets/css/exchange.css — mobile-first */
+
+/* ── 공통 ────────────────────────────────────────────────────────────── */
+/* iOS 입력창 자동 확대 방지 */
+.input, input, select, textarea {
+  font-size: 16px !important;
+}
+
+/* 터치 타겟 */
+.btnx, .exch-tab, .chart-tf {
+  touch-action: manipulation;
+  min-height: 44px;
+}
+
+/* ── Title bar ──────────────────────────────────────────────────────── */
+.exch-title-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.exch-h1 {
+  margin: 0 0 4px;
+  font-size: clamp(20px, 5vw, 30px);
+  font-weight: 900;
+}
+.exch-sub {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.exch-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+#addrBadge {
+  font-size: 11px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* ── Chart ───────────────────────────────────────────────────────────── */
-.chart-card { margin-bottom: 18px; }
+.chart-card { margin-bottom: 14px; }
 
 .chart-controls {
   display: flex;
   align-items: center;
   gap: 5px;
+  flex-wrap: wrap;
 }
 .chart-tf {
   appearance: none;
@@ -14,12 +59,13 @@
   border: 1px solid var(--line);
   color: var(--muted);
   border-radius: 8px;
-  padding: 5px 10px;
-  font-size: 11px;
+  padding: 6px 12px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
   transition: all .15s;
+  min-height: 36px;
 }
 .chart-tf:hover { background: rgba(255,255,255,.10); color: var(--text); }
 .chart-tf.active {
@@ -30,7 +76,7 @@
 
 #chartContainer {
   width: 100%;
-  height: 320px;
+  height: 220px;        /* 모바일 기본 */
   border-radius: 10px;
   overflow: hidden;
   margin-top: 8px;
@@ -45,130 +91,97 @@
 
 /* ── Ecosystem Banner ───────────────────────────────────────────────── */
 .eco-banner {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   border: 1px solid rgba(124,255,209,.25);
   border-radius: var(--r);
   background: linear-gradient(135deg, rgba(124,255,209,.07) 0%, rgba(120,180,255,.06) 60%, rgba(255,255,255,.02) 100%);
-  padding: 22px 24px 18px;
+  padding: 16px;
 }
 .eco-flow {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
+  gap: 4px;
+  flex-wrap: nowrap;
+  margin-bottom: 14px;
+  overflow-x: auto;
 }
 .eco-node {
   text-align: center;
-  padding: 14px 18px;
-  border-radius: 16px;
+  padding: 10px 10px;
+  border-radius: 14px;
   border: 1px solid var(--line);
   background: rgba(255,255,255,.05);
-  min-width: 120px;
+  min-width: 80px;
+  flex-shrink: 0;
 }
 .eco-node-exch { border-color: rgba(120,180,255,.35); background: rgba(120,180,255,.08); }
 .eco-node-farm { border-color: rgba(124,255,209,.35); background: rgba(124,255,209,.08); }
 .eco-node-user { border-color: rgba(255,209,102,.30); background: rgba(255,209,102,.06); }
-.eco-icon { font-size: 26px; margin-bottom: 6px; }
-.eco-label { font-size: 13px; font-weight: 800; margin-bottom: 3px; }
-.eco-node .eco-desc { font-size: 11px; color: var(--muted); }
+.eco-icon { font-size: 20px; margin-bottom: 4px; }
+.eco-label { font-size: 11px; font-weight: 800; margin-bottom: 2px; }
+.eco-node .eco-desc { font-size: 10px; color: var(--muted); }
 
 .eco-arrow {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0 10px;
-  gap: 3px;
+  padding: 0 4px;
+  gap: 2px;
+  flex-shrink: 0;
 }
 .eco-arrow-label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   color: var(--brand);
-  letter-spacing: .3px;
+  letter-spacing: .2px;
   white-space: nowrap;
 }
 .eco-arrow-line {
-  width: 40px;
+  width: 20px;
   height: 1px;
   background: linear-gradient(90deg, rgba(124,255,209,.3), rgba(124,255,209,.7));
 }
 .eco-arrow-head {
-  font-size: 18px;
+  font-size: 14px;
   color: var(--brand);
   line-height: 1;
-  margin-top: -4px;
+  margin-top: -3px;
 }
 
 .eco-desc-box {
-  font-size: 13px;
-  line-height: 1.7;
+  font-size: 12px;
+  line-height: 1.65;
   color: var(--muted);
   border-top: 1px solid var(--line);
-  padding-top: 14px;
+  padding-top: 12px;
   text-align: center;
 }
 .eco-desc-box strong { color: var(--text); }
 .eco-desc-box em { font-style: normal; color: var(--brand); }
 
-@media (max-width: 600px) {
-  .eco-flow { gap: 8px; }
-  .eco-arrow { flex-direction: row; padding: 0 4px; }
-  .eco-arrow-line { width: 16px; }
-  .eco-node { min-width: 90px; padding: 10px 10px; }
-  .eco-icon { font-size: 20px; }
-}
-
-/* ── Title bar ──────────────────────────────────────────────────────── */
-.exch-title-bar {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
-}
-.exch-h1 {
-  margin: 0 0 4px;
-  font-size: clamp(20px, 3.5vw, 30px);
-  font-weight: 900;
-}
-.exch-sub {
-  margin: 0;
-  font-size: 13px;
-  color: var(--muted);
-}
-.exch-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
 /* ── Market stats bar ───────────────────────────────────────────────── */
 .exch-stats {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 .estat {
-  flex: 1;
-  min-width: 130px;
   border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 14px 16px;
+  border-radius: 12px;
+  padding: 12px 12px;
   background: rgba(255,255,255,.05);
 }
 .estat-k {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--muted);
-  margin-bottom: 5px;
+  margin-bottom: 4px;
   font-weight: 600;
   letter-spacing: .3px;
 }
 .estat-v {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   font-family: ui-monospace, monospace;
   word-break: break-all;
@@ -176,28 +189,24 @@
 .my-stat { border-color: rgba(124,255,209,.20); background: rgba(124,255,209,.05); }
 
 /* ── Main layout ─────────────────────────────────────────────────────── */
+/* 모바일: 단일 컬럼, 거래 패널 → 오더북 순서 */
 .exch-main {
-  display: grid;
-  grid-template-columns: 380px 1fr;
-  gap: 14px;
-  align-items: start;
-}
-@media (max-width: 920px) {
-  .exch-main { grid-template-columns: 1fr; }
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-/* ── Trade card (sticky) ─────────────────────────────────────────────── */
+/* ── Trade card ──────────────────────────────────────────────────────── */
 .exch-trade-card {
-  position: sticky;
-  top: 76px;
+  position: static; /* 모바일에서 sticky 해제 */
 }
 
 /* ── Tabs ────────────────────────────────────────────────────────────── */
 .exch-tabs {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 4px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
+  margin-bottom: 14px;
 }
 .exch-tab {
   appearance: none;
@@ -205,12 +214,14 @@
   border: 1px solid var(--line);
   color: var(--muted);
   border-radius: 10px;
-  padding: 8px 11px;
+  padding: 10px 6px;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   transition: all .15s;
   font-family: inherit;
+  text-align: center;
+  line-height: 1.3;
 }
 .exch-tab:hover:not(:disabled) {
   background: rgba(255,255,255,.10);
@@ -233,8 +244,8 @@
 .exch-pane-desc {
   font-size: 12px;
   color: var(--muted);
-  line-height: 1.65;
-  margin-bottom: 14px;
+  line-height: 1.6;
+  margin-bottom: 12px;
   padding: 10px 12px;
   background: rgba(255,255,255,.03);
   border-radius: 10px;
@@ -256,17 +267,18 @@
 .full-btn {
   width: 100%;
   margin-top: 6px;
-  font-size: 14px;
-  padding: 12px;
+  font-size: 15px;
+  padding: 14px;
   border-radius: 14px;
+  min-height: 50px;
 }
 
 /* ── Order book panel ────────────────────────────────────────────────── */
 .book-header {
   display: grid;
-  grid-template-columns: 46px 1fr 1fr auto;
-  gap: 8px;
-  font-size: 11px;
+  grid-template-columns: 36px 1fr 1fr auto;
+  gap: 6px;
+  font-size: 10px;
   color: var(--muted);
   padding: 4px 8px 8px;
   border-bottom: 1px solid var(--line);
@@ -276,9 +288,9 @@
 
 .book-row {
   display: grid;
-  grid-template-columns: 46px 1fr 1fr auto;
-  gap: 8px;
-  padding: 8px;
+  grid-template-columns: 36px 1fr 1fr auto;
+  gap: 6px;
+  padding: 10px 8px;
   border-radius: 8px;
   font-size: 12px;
   align-items: center;
@@ -289,25 +301,34 @@
 
 .book-id {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 10px;
   font-family: ui-monospace, monospace;
 }
 .book-price {
   font-weight: 700;
   font-family: ui-monospace, monospace;
+  font-size: 12px;
 }
 .book-amt {
   color: var(--muted);
   font-family: ui-monospace, monospace;
-  font-size: 11px;
+  font-size: 10px;
+  word-break: break-all;
 }
 .book-actions {
   display: flex;
   gap: 4px;
   justify-content: flex-end;
 }
+/* 오더북 버튼 터치 친화 */
+.book-actions .btnx {
+  min-height: 36px;
+  padding: 6px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
 .book-empty {
-  padding: 14px 8px;
+  padding: 16px 8px;
   color: var(--muted);
   font-size: 12px;
   text-align: center;
@@ -335,16 +356,13 @@
 .book-sell-dot { width: 8px; height: 8px; border-radius: 50%; background: #ff4d6d; display: inline-block; }
 
 /* ── My orders section ───────────────────────────────────────────────── */
-.my-orders-card {
-  margin-top: 14px;
-}
+.my-orders-card { margin-top: 12px; }
 
 /* ── My orders grid (5 col) ──────────────────────────────────────────── */
-#myOrdersList .book-row {
-  grid-template-columns: 46px 48px 1fr 1fr auto;
-}
+#myOrdersList .book-row,
 #myOrdersList .book-header {
-  grid-template-columns: 46px 48px 1fr 1fr auto;
+  grid-template-columns: 34px 40px 1fr 1fr auto;
+  font-size: 11px;
 }
 
 /* ── Info badge ──────────────────────────────────────────────────────── */
@@ -365,19 +383,17 @@
 .admin-panel {
   border-color: rgba(255,209,102,.30);
   background: linear-gradient(180deg, rgba(255,209,102,.06), rgba(255,255,255,.03));
+  margin-top: 12px;
 }
 .admin-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-@media (max-width: 720px) {
-  .admin-grid { grid-template-columns: 1fr; }
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 .admin-block {
   border: 1px solid rgba(255,209,102,.20);
   border-radius: 14px;
-  padding: 14px 16px;
+  padding: 14px 14px;
   background: rgba(0,0,0,.15);
 }
 .admin-block-title {
@@ -398,15 +414,133 @@
   align-items: center;
   flex-wrap: wrap;
 }
+/* 어드민 입력 모바일 전체 폭 */
+.admin-row .input {
+  flex: 1;
+  min-width: 0;
+  max-width: 100% !important;
+}
+.admin-row .btnx {
+  white-space: nowrap;
+  min-height: 44px;
+}
 
-/* ── Responsive ──────────────────────────────────────────────────────── */
-@media (max-width: 600px) {
-  .exch-stats { gap: 7px; }
-  .estat { min-width: 45%; padding: 10px 12px; }
-  .estat-v { font-size: 13px; }
-  .exch-tabs { gap: 3px; }
-  .exch-tab { padding: 7px 8px; font-size: 11px; }
-  .book-header, .book-row { grid-template-columns: 36px 1fr 1fr auto; gap: 5px; font-size: 11px; }
+/* ── card 공통 padding 모바일 ────────────────────────────────────────── */
+.card {
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  padding: 16px;
+}
+.card-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.card-t {
+  font-weight: 800;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── field / input ───────────────────────────────────────────────────── */
+.field { margin-bottom: 12px; }
+.label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+/* ── note / log ──────────────────────────────────────────────────────── */
+.note {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 10px;
+  min-height: 18px;
+  line-height: 1.55;
+  word-break: break-all;
+}
+
+/* ════════════════════════════════════════════
+   태블릿 이상 (600px+)
+════════════════════════════════════════════ */
+@media (min-width: 600px) {
+  .exch-title-bar {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  #chartContainer { height: 280px; }
+
+  .exch-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .exch-tabs {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .admin-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-row .input {
+    max-width: 160px !important;
+    flex: none;
+  }
+}
+
+/* ════════════════════════════════════════════
+   데스크톱 (920px+)
+════════════════════════════════════════════ */
+@media (min-width: 920px) {
+  #chartContainer { height: 320px; }
+
+  .exch-main {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+
+  .exch-trade-card {
+    position: sticky;
+    top: 76px;
+  }
+
+  .exch-stats {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .estat-k { font-size: 11px; }
+  .estat-v  { font-size: 15px; }
+
+  .book-header,
+  .book-row {
+    grid-template-columns: 46px 1fr 1fr auto;
+    gap: 8px;
+    font-size: 12px;
+  }
+
   #myOrdersList .book-row,
-  #myOrdersList .book-header { grid-template-columns: 36px 40px 1fr 1fr auto; }
+  #myOrdersList .book-header {
+    grid-template-columns: 46px 48px 1fr 1fr auto;
+    font-size: 12px;
+  }
+
+  .eco-node { min-width: 110px; padding: 14px 16px; }
+  .eco-icon { font-size: 24px; }
+  .eco-label { font-size: 13px; }
+  .eco-node .eco-desc { font-size: 11px; }
+  .eco-arrow-line { width: 36px; }
+  .eco-arrow-label { font-size: 10px; }
 }

@@ -1,2 +1,10 @@
 # 민감한 설정 파일 — 절대 커밋 금지
 assets/js/jump-config.js
+
+# 환경변수 파일 — 개인키 포함, 절대 커밋 금지
+.env
+**/.env
+bot/.env
+
+# Local Netlify folder
+.netlify

@@ -186,7 +186,11 @@ a{ color:inherit; text-decoration:none; }
 .hdr-right{
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:8px;
+}
+/* 모바일에서 네트워크 뱃지 숨김 */
+@media (max-width: 480px) {
+  .net-badge { display: none; }
 }
 
 /* ===== 햄버거 ===== */

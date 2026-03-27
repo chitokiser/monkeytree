@@ -58,7 +58,7 @@
   }
 
   /* ── Constants ──────────────────────────────────────────────────────── */
-  const EXCHANGE_ADDRESS = '0xa987DD8dBca70C84cB5371B74e5e8ce5e24F7D86';
+  const EXCHANGE_ADDRESS = '0x058EbD15e414993d428ADd8fCD04fFc9Fa36A1bB'; // MktExchangeV3
 
   const EXCHANGE_ABI = [
     'function marketPrice() view returns (uint256)',
@@ -92,6 +92,8 @@
     'function setMarketPrice(uint256 nextPrice)',
     'function addMarketLiquidity(uint256 mktAmount, uint256 quoteAmount)',
     'function removeMarketLiquidity(address to, uint256 mktAmount, uint256 quoteAmount)',
+    // V3: VWAP 버퍼 조회
+    'function getVwapInfo() view returns (uint256 count, uint256 sumMkt, uint256 sumQuote, uint256 vwap)',
   ];
 
   const ERC20_ABI = [
@@ -128,12 +130,15 @@
   const setNote = v => { const el = $('exchNote'); if (el) el.textContent = v || ''; };
 
   /* ── Formatters ──────────────────────────────────────────────────────── */
-  const fmt = (wei, dec, digits = 6) => {
+  const fmt = (wei, dec, digits = 6, fixed = false) => {
     if (wei == null) return '-';
     try {
       const n = parseFloat(ethers.formatUnits(wei.toString(), dec));
       if (isNaN(n)) return wei.toString();
-      return n.toLocaleString('ko-KR', { maximumFractionDigits: digits });
+      return n.toLocaleString('ko-KR', {
+        minimumFractionDigits: fixed ? digits : 0,
+        maximumFractionDigits: digits,
+      });
     } catch { return wei.toString(); }
   };
 
@@ -222,7 +227,7 @@
         readExch.totalFeeQuote(),
       ]);
 
-      setText('mktPrice', fmt(price, quoteDec, 4) + ' ' + quoteSym + ' / 1 ' + mktSym);
+      setText('mktPrice', fmt(price, quoteDec, 4, true) + ' ' + quoteSym + ' / 1 ' + mktSym);
       const actNum = Number(actVal);
       const actLabels = ['⛔ 거래중단', '✅ 시장가 가능', '✅ 전체 가능'];
       setText('mktStatus', actLabels[actNum] || '-');
@@ -354,7 +359,7 @@
       const tx = await writeExch.placeLimitBuy(amt, price);
       setNote('트랜잭션 확인 대기 중...');
       await tx.wait();
-      setNote('✅ 지정가 매수 주문 등록! ' + fmt(amt, mktDec) + ' ' + mktSym + ' @ ' + fmt(price, quoteDec) + ' ' + quoteSym);
+      setNote('✅ 지정가 매수 주문 등록! ' + fmt(amt, mktDec) + ' ' + mktSym + ' @ ' + fmt(price, quoteDec, 4, true) + ' ' + quoteSym);
       $('inLimitBuyMkt').value = '';
       $('inLimitBuyPrice').value = '';
       await loadOrderBook();
@@ -379,7 +384,7 @@
       const tx = await writeExch.placeLimitSell(amt, price);
       setNote('트랜잭션 확인 대기 중...');
       await tx.wait();
-      setNote('✅ 지정가 매도 주문 등록! ' + fmt(amt, mktDec) + ' ' + mktSym + ' @ ' + fmt(price, quoteDec) + ' ' + quoteSym);
+      setNote('✅ 지정가 매도 주문 등록! ' + fmt(amt, mktDec) + ' ' + mktSym + ' @ ' + fmt(price, quoteDec, 4) + ' ' + quoteSym);
       $('inLimitSellMkt').value = '';
       $('inLimitSellPrice').value = '';
       await loadOrderBook();
@@ -511,7 +516,7 @@
       const canFill  = connected && !isMine;
       return `<div class="book-row${isMine ? ' mine' : ''}">
         <span class="book-id">#${o.id}</span>
-        <span class="book-price">${fmt(o.price, quoteDec)}</span>
+        <span class="book-price">${fmt(o.price, quoteDec, 4, true)}</span>
         <span class="book-amt">${fmt(o.remaining, mktDec)} / ${fmt(o.amount, mktDec)}</span>
         <span class="book-actions">
           ${isMine  ? `<button class="btnx small danger" onclick="window._exchCancel(${o.id})">취소</button>` : ''}
@@ -557,7 +562,7 @@
         return `<div class="book-row mine">
           <span class="book-id">#${o.id}</span>
           <span class="${cls}">${side}</span>
-          <span class="book-price">${fmt(o.price, quoteDec)} ${quoteSym}</span>
+          <span class="book-price">${fmt(o.price, quoteDec, 4, true)} ${quoteSym}</span>
           <span class="book-amt">${fmt(o.remaining, mktDec)} / ${fmt(o.amount, mktDec)} ${mktSym}</span>
           <span class="book-actions">
             <button class="btnx small danger" onclick="window._exchCancel(${o.id})">취소</button>
@@ -611,7 +616,7 @@
       setAdminNote('시장가 변경 중...');
       const tx = await writeExch.setMarketPrice(price);
       await tx.wait();
-      setAdminNote('✅ 시장가 변경 완료: ' + fmt(price, quoteDec) + ' ' + quoteSym);
+      setAdminNote('✅ 시장가 변경 완료: ' + fmt(price, quoteDec, 4, true) + ' ' + quoteSym);
       await loadMarketState();
     } catch (e) {
       setAdminNote('❌ 오류: ' + (e.reason || e.message));
