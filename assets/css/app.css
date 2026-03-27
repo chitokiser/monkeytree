@@ -188,9 +188,20 @@ a{ color:inherit; text-decoration:none; }
   align-items:center;
   gap:8px;
 }
-/* 모바일에서 네트워크 뱃지 숨김 */
-@media (max-width: 480px) {
+/* ===== 모바일 헤더 ===== */
+@media (max-width: 600px) {
   .net-badge { display: none; }
+  /* 구글 로그인 버튼 모바일 숨김 — 햄버거 메뉴에서 접근 */
+  #btnGoogleLogin { display: none !important; }
+  /* 지갑 연결 버튼 축소 */
+  #hdrConnect { font-size: 12px; padding: 7px 10px; }
+  /* 브랜드 최소폭 제거 */
+  .brand { min-width: 0; }
+  .brand-name { font-size: 14px; }
+  /* 헤더 패딩 축소 */
+  .hdr-inner { padding: 10px 12px; gap: 8px; }
+  /* main 패딩 축소 */
+  .main-wrap { padding: 12px 12px 32px; }
 }
 
 /* ===== 햄버거 ===== */

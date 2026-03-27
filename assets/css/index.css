@@ -568,3 +568,36 @@
 @media (min-width: 1200px) {
   .ports-grid { grid-template-columns: repeat(6, 1fr); }
 }
+
+/* =========================================================
+   초소형 모바일 (480px 이하) 추가 강화
+========================================================= */
+@media (max-width: 480px) {
+  /* 카드 패딩·반경 축소 */
+  .card { padding: 12px; border-radius: 14px; }
+
+  /* row: k/v 수직 스택으로 전환 */
+  .row {
+    flex-direction: column;
+    gap: 3px;
+    padding: 10px;
+  }
+  .k { font-size: 11px; }
+  .v { text-align: left; font-size: 13px; }
+
+  /* pre 코드 블록 축소 */
+  pre.note {
+    font-size: 11px;
+    padding: 10px;
+    overflow-x: auto;
+  }
+  .note { font-size: 12px; padding: 10px; }
+
+  /* 타이틀 여백 축소 */
+  .card-h { margin-bottom: 10px; }
+  .card-t { font-size: 13px; }
+
+  /* 히어로 버튼 전체 너비 */
+  .hero-right { flex-direction: column; width: 100%; }
+  .hero-right .btnx { width: 100%; text-align: center; }
+}
