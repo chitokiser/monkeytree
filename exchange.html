@@ -1,0 +1,261 @@
+<!-- /exchange.html -->
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MKT 거래소 - MonkeyTree</title>
+
+  <link rel="icon" href="assets/img/favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="assets/img/favicon.png" />
+
+  <link rel="stylesheet" href="assets/css/app.css" />
+  <link rel="stylesheet" href="assets/css/index.css" />
+  <link rel="stylesheet" href="assets/css/exchange.css" />
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.14.0/dist/ethers.umd.min.js"></script>
+  <script src="assets/js/partials.js" defer></script>
+  <script src="assets/js/header-wallet.js" defer></script>
+</head>
+
+<body>
+  <div class="page">
+    <div id="site-header"></div>
+
+    <main class="main-wrap">
+
+      <!-- ══ Title bar ══════════════════════════════════════════════════ -->
+      <div class="exch-title-bar">
+        <div>
+          <h1 class="exch-h1">MKT 거래소</h1>
+          <p class="exch-sub">
+            MKT ↔ <span data-sym-quote>HEX</span> 시장가 / 지정가 거래 &nbsp;|&nbsp; 수수료 3% &nbsp;|&nbsp; opBNB
+          </p>
+        </div>
+        <div class="exch-controls">
+          <span class="chip mono" id="addrBadge">지갑: 미연결</span>
+          <button class="btnx" id="btnConnect">지갑 연결</button>
+          <button class="btnx secondary" id="btnRefresh">새로고침</button>
+        </div>
+      </div>
+
+      <!-- ══ Market Stats ══════════════════════════════════════════════ -->
+      <div class="exch-stats">
+        <div class="estat">
+          <div class="estat-k">현재 시장가</div>
+          <div class="estat-v" id="mktPrice">-</div>
+        </div>
+        <div class="estat">
+          <div class="estat-k">거래 상태</div>
+          <div class="estat-v" id="mktStatus">-</div>
+        </div>
+        <div class="estat">
+          <div class="estat-k">구매 가능 <span data-sym-mkt>MKT</span></div>
+          <div class="estat-v mono" id="availMkt">-</div>
+        </div>
+        <div class="estat">
+          <div class="estat-k">매도 가능 <span data-sym-quote>HEX</span></div>
+          <div class="estat-v mono" id="availQuote">-</div>
+        </div>
+        <div class="estat my-stat">
+          <div class="estat-k">내 <span data-sym-mkt>MKT</span> 잔고</div>
+          <div class="estat-v mono" id="myMktBal">-</div>
+        </div>
+        <div class="estat my-stat">
+          <div class="estat-k">내 <span data-sym-quote>HEX</span> 잔고</div>
+          <div class="estat-v mono" id="myQuoteBal">-</div>
+        </div>
+      </div>
+
+      <!-- ══ Trade Panel + Order Book ════════════════════════════════ -->
+      <div class="exch-main">
+
+        <!-- Trade Card (left, sticky) -->
+        <div class="card exch-trade-card">
+          <div class="card-h">
+            <div class="card-t">거래</div>
+            <span class="chip" style="font-size:11px;">승인이 부족하면 자동 처리</span>
+          </div>
+
+          <!-- Tab buttons -->
+          <div class="exch-tabs">
+            <button class="exch-tab active" data-tab="pane-market-buy">시장가 매수</button>
+            <button class="exch-tab" data-tab="pane-market-sell">시장가 매도</button>
+            <button class="exch-tab" data-tab="pane-limit-buy">지정가 매수</button>
+            <button class="exch-tab" data-tab="pane-limit-sell">지정가 매도</button>
+          </div>
+
+          <!-- Pane: Market Buy -->
+          <div class="exch-pane active" id="pane-market-buy">
+            <div class="exch-pane-desc">
+              현재 시장가로 <span data-sym-mkt>MKT</span>를 즉시 구매합니다.
+              <span data-sym-quote>HEX</span>로 결제하며 수수료 3%가 추가됩니다.
+              컨트랙트 재고가 충분해야 체결됩니다.
+            </div>
+            <div class="field">
+              <div class="label">구매할 <span data-sym-mkt>MKT</span> 수량</div>
+              <input class="input mono" id="inBuyMkt" placeholder="예: 100" inputmode="decimal" />
+            </div>
+            <div class="preview-box" id="previewBuyResult"></div>
+            <div class="approve-notice">
+              <span class="approve-icon">ℹ️</span>
+              <div>
+                <span data-sym-quote>HEX</span> 승인이 부족하면 <strong>자동으로 먼저 처리</strong>됩니다.
+                슬리피지 허용: 5%
+              </div>
+            </div>
+            <button class="btnx full-btn" id="btnMarketBuy">
+              <span data-sym-mkt>MKT</span> 시장가 매수
+            </button>
+          </div>
+
+          <!-- Pane: Market Sell -->
+          <div class="exch-pane" id="pane-market-sell">
+            <div class="exch-pane-desc">
+              보유한 <span data-sym-mkt>MKT</span>를 현재 시장가로 즉시 판매합니다.
+              <span data-sym-quote>HEX</span>로 수령하며 수수료 3%가 차감됩니다.
+              컨트랙트 <span data-sym-quote>HEX</span> 재고가 충분해야 체결됩니다.
+            </div>
+            <div class="field">
+              <div class="label">판매할 <span data-sym-mkt>MKT</span> 수량</div>
+              <input class="input mono" id="inSellMkt" placeholder="예: 100" inputmode="decimal" />
+            </div>
+            <div class="preview-box" id="previewSellResult"></div>
+            <div class="approve-notice">
+              <span class="approve-icon">ℹ️</span>
+              <div>
+                <span data-sym-mkt>MKT</span> 승인이 부족하면 <strong>자동으로 먼저 처리</strong>됩니다.
+                슬리피지 허용: 5%
+              </div>
+            </div>
+            <button class="btnx full-btn danger" id="btnMarketSell">
+              <span data-sym-mkt>MKT</span> 시장가 매도
+            </button>
+          </div>
+
+          <!-- Pane: Limit Buy -->
+          <div class="exch-pane" id="pane-limit-buy">
+            <div class="exch-pane-desc">
+              원하는 가격에 <span data-sym-mkt>MKT</span> 매수 주문을 등록합니다.
+              누군가 해당 가격에 <span data-sym-mkt>MKT</span>를 팔면 자동 체결됩니다.
+              주문 시 비용(<span data-sym-quote>HEX</span>)이 컨트랙트에 예치되고, 취소하면 환불됩니다.
+            </div>
+            <div class="field">
+              <div class="label">구매할 <span data-sym-mkt>MKT</span> 수량</div>
+              <input class="input mono" id="inLimitBuyMkt" placeholder="예: 100" inputmode="decimal" />
+            </div>
+            <div class="field">
+              <div class="label">1 <span data-sym-mkt>MKT</span> 당 지정가 (<span data-sym-quote>HEX</span>)</div>
+              <input class="input mono" id="inLimitBuyPrice" placeholder="예: 5.0" inputmode="decimal" />
+            </div>
+            <div class="approve-notice">
+              <span class="approve-icon">ℹ️</span>
+              <div>
+                총 비용(수량 × 가격)만큼 <span data-sym-quote>HEX</span>가 예치됩니다.
+                수수료는 체결 시 차감됩니다.
+              </div>
+            </div>
+            <button class="btnx full-btn" id="btnLimitBuy">
+              지정가 매수 주문 등록
+            </button>
+          </div>
+
+          <!-- Pane: Limit Sell -->
+          <div class="exch-pane" id="pane-limit-sell">
+            <div class="exch-pane-desc">
+              원하는 가격에 <span data-sym-mkt>MKT</span> 매도 주문을 등록합니다.
+              누군가 해당 가격에 <span data-sym-mkt>MKT</span>를 사면 자동 체결됩니다.
+              주문 시 <span data-sym-mkt>MKT</span>가 컨트랙트에 예치되고, 취소하면 환불됩니다.
+            </div>
+            <div class="field">
+              <div class="label">판매할 <span data-sym-mkt>MKT</span> 수량</div>
+              <input class="input mono" id="inLimitSellMkt" placeholder="예: 100" inputmode="decimal" />
+            </div>
+            <div class="field">
+              <div class="label">1 <span data-sym-mkt>MKT</span> 당 지정가 (<span data-sym-quote>HEX</span>)</div>
+              <input class="input mono" id="inLimitSellPrice" placeholder="예: 6.0" inputmode="decimal" />
+            </div>
+            <div class="approve-notice">
+              <span class="approve-icon">ℹ️</span>
+              <div>
+                판매 수량만큼 <span data-sym-mkt>MKT</span>가 예치됩니다.
+                체결 시 <span data-sym-quote>HEX</span>를 수령합니다.
+              </div>
+            </div>
+            <button class="btnx full-btn danger" id="btnLimitSell">
+              지정가 매도 주문 등록
+            </button>
+          </div>
+
+          <!-- Note / log -->
+          <div class="note" id="exchNote"></div>
+        </div>
+
+        <!-- Order Book (right) -->
+        <div class="exch-book-panel">
+
+          <!-- Buy orders -->
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t">
+                <span class="book-buy-dot"></span>
+                지정가 매수 주문
+              </div>
+              <span class="chip" style="font-size:11px; color:#34a853;">BUY</span>
+            </div>
+            <div class="book-header">
+              <span>#</span>
+              <span>가격 (<span data-sym-quote>HEX</span>)</span>
+              <span>잔량 / 원량 (<span data-sym-mkt>MKT</span>)</span>
+              <span></span>
+            </div>
+            <div id="bookBuys"><div class="book-empty">로딩 중...</div></div>
+          </div>
+
+          <!-- Sell orders -->
+          <div class="card" style="margin-top:14px;">
+            <div class="card-h">
+              <div class="card-t">
+                <span class="book-sell-dot"></span>
+                지정가 매도 주문
+              </div>
+              <span class="chip" style="font-size:11px; color:#ff4d6d;">SELL</span>
+            </div>
+            <div class="book-header">
+              <span>#</span>
+              <span>가격 (<span data-sym-quote>HEX</span>)</span>
+              <span>잔량 / 원량 (<span data-sym-mkt>MKT</span>)</span>
+              <span></span>
+            </div>
+            <div id="bookSells"><div class="book-empty">로딩 중...</div></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ══ My Orders ════════════════════════════════════════════════ -->
+      <div class="card my-orders-card">
+        <div class="card-h">
+          <div class="card-t">내 활성 주문</div>
+          <button class="btnx small secondary" id="btnRefreshOrders">새로고침</button>
+        </div>
+        <div class="book-header" style="grid-template-columns: 46px 48px 1fr 1fr auto;">
+          <span>#</span>
+          <span>유형</span>
+          <span>가격 (<span data-sym-quote>HEX</span>)</span>
+          <span>잔량 / 원량 (<span data-sym-mkt>MKT</span>)</span>
+          <span></span>
+        </div>
+        <div id="myOrdersList">
+          <div class="book-empty">지갑을 연결하면 내 주문이 표시됩니다.</div>
+        </div>
+      </div>
+
+    </main>
+
+    <div id="site-footer"></div>
+  </div>
+
+  <script src="assets/js/exchange.js"></script>
+</body>
+</html>
