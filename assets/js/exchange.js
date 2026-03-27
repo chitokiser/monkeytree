@@ -467,7 +467,15 @@
       const start = Math.max(1, nextId - 100);
       const ids = Array.from({ length: nextId - start }, (_, i) => start + i);
       const rawOrders = await Promise.all(
-        ids.map(id => readExch.orders(id).then(o => ({ id, ...o })).catch(() => null))
+        ids.map(id => readExch.orders(id).then(o => ({
+          id,
+          maker:     o.maker,
+          side:      o.side,
+          price:     o.price,
+          amount:    o.amount,
+          remaining: o.remaining,
+          active:    o.active,
+        })).catch(() => null))
       );
       const active = rawOrders.filter(o => o && o.active);
       // Sort buy orders: highest price first; sell orders: lowest price first
@@ -519,7 +527,15 @@
       const start = Math.max(1, nextId - 200);
       const ids = Array.from({ length: nextId - start }, (_, i) => start + i);
       const rawOrders = await Promise.all(
-        ids.map(id => readExch.orders(id).then(o => ({ id, ...o })).catch(() => null))
+        ids.map(id => readExch.orders(id).then(o => ({
+          id,
+          maker:     o.maker,
+          side:      o.side,
+          price:     o.price,
+          amount:    o.amount,
+          remaining: o.remaining,
+          active:    o.active,
+        })).catch(() => null))
       );
       const mine = rawOrders.filter(o =>
         o && o.active && o.maker.toLowerCase() === account.toLowerCase()
