@@ -1,5 +1,81 @@
 /* /assets/css/exchange.css */
 
+/* ── Ecosystem Banner ───────────────────────────────────────────────── */
+.eco-banner {
+  margin-bottom: 20px;
+  border: 1px solid rgba(124,255,209,.25);
+  border-radius: var(--r);
+  background: linear-gradient(135deg, rgba(124,255,209,.07) 0%, rgba(120,180,255,.06) 60%, rgba(255,255,255,.02) 100%);
+  padding: 22px 24px 18px;
+}
+.eco-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.eco-node {
+  text-align: center;
+  padding: 14px 18px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.05);
+  min-width: 120px;
+}
+.eco-node-exch { border-color: rgba(120,180,255,.35); background: rgba(120,180,255,.08); }
+.eco-node-farm { border-color: rgba(124,255,209,.35); background: rgba(124,255,209,.08); }
+.eco-node-user { border-color: rgba(255,209,102,.30); background: rgba(255,209,102,.06); }
+.eco-icon { font-size: 26px; margin-bottom: 6px; }
+.eco-label { font-size: 13px; font-weight: 800; margin-bottom: 3px; }
+.eco-node .eco-desc { font-size: 11px; color: var(--muted); }
+
+.eco-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 10px;
+  gap: 3px;
+}
+.eco-arrow-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--brand);
+  letter-spacing: .3px;
+  white-space: nowrap;
+}
+.eco-arrow-line {
+  width: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(124,255,209,.3), rgba(124,255,209,.7));
+}
+.eco-arrow-head {
+  font-size: 18px;
+  color: var(--brand);
+  line-height: 1;
+  margin-top: -4px;
+}
+
+.eco-desc-box {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  text-align: center;
+}
+.eco-desc-box strong { color: var(--text); }
+.eco-desc-box em { font-style: normal; color: var(--brand); }
+
+@media (max-width: 600px) {
+  .eco-flow { gap: 8px; }
+  .eco-arrow { flex-direction: row; padding: 0 4px; }
+  .eco-arrow-line { width: 16px; }
+  .eco-node { min-width: 90px; padding: 10px 10px; }
+  .eco-icon { font-size: 20px; }
+}
+
 /* ── Title bar ──────────────────────────────────────────────────────── */
 .exch-title-bar {
   display: flex;
